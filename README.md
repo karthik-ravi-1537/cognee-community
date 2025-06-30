@@ -40,8 +40,6 @@ Install the chosen community packaging using `uv pip install ...`
 
 ```bash
 uv pip install cognee-community-vector-adapter-qdrant
-uv pip install cognee-community-vector-adapter-redis
-uv pip install cognee-community-vector-adapter-azure
 ```
 
 This is community plugins repo, for core repo and on how to get started with cognee, please check: https://github.com/topoteretes/cognee
