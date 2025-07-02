@@ -297,7 +297,10 @@ class AzureAISearchAdapter(VectorDBInterface):
             query_vector = (await self.embed_data([query_text]))[0]
 
         # Ensure limit is within Azure AI Search's valid range (1-10000)
-        limit = max(1, min(limit, 10000))
+        if limit > 0:
+            limit = min(limit, 10000)
+        else:
+            limit = 10000
 
         async with self.get_async_search_client(sanitized_name) as client:
             # Create vector query

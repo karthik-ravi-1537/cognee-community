@@ -284,7 +284,10 @@ class OpenSearchAdapter(VectorDBInterface):
             - List[ScoredResult]: List of search results as ScoredResult objects.
         """
         # Ensure limit is within OpenSeachs's valid range (1-10000)
-        limit = max(1, min(limit, 10000))
+        if limit > 0:
+            limit = min(limit, 10000)
+        else:
+            limit = 10000
         
         if query_text is None and query_vector is None:
             raise ValueError("One of query_text or query_vector must be provided!")
