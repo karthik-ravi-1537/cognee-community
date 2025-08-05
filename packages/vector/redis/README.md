@@ -8,7 +8,7 @@
     <br />
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-![Language](https://img.shields.io/badge/python-3.8+-blue.svg)
+![Language](https://img.shields.io/badge/python-3.11+-blue.svg)
 
 [![Powered by RedisVL](https://img.shields.io/badge/Powered%20by-RedisVL-red.svg)](https://github.com/redis/redis-vl-python)
 
@@ -62,95 +62,114 @@ uv run examples/example.py
 ## Usage
 
 ```python
-from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import EmbeddingEngine
-from cognee_community_vector_adapter_redis import RedisAdapter
+import os
+import asyncio
+from cognee import config, prune, add, cognify, search, SearchType
 
-# Initialize your embedding engine
-embedding_engine = EmbeddingEngine(
-    model="your-model",
-    # ... other config
-)
+# Import the register module to enable Redis support
+from cognee_community_vector_adapter_redis import register
 
-# Create Redis adapter
-redis_adapter = RedisAdapter(
-    url="redis://localhost:6379",  # Redis connection URL
-    embedding_engine=embedding_engine,
-    api_key=None  # Optional, not used for Redis but part of interface
-)
+async def main():
+    # Configure Redis as vector database
+    config.set_vector_db_config({
+        "vector_db_provider": "redis",
+        "vector_db_url": os.getenv("VECTOR_DB_URL", "redis://localhost:6379"),
+        "vector_db_key": os.getenv("VECTOR_DB_KEY", "your-api-key"),  # Optional
+    })
+    
+    # Optional: Clean previous data
+    await prune.prune_data()
+    await prune.prune_system()
+    
+    # Add your content
+    await add("""
+    Natural language processing (NLP) is an interdisciplinary
+    subfield of computer science and information retrieval.
+    """)
+    
+    # Process with cognee
+    await cognify()
+    
+    # Search
+    search_results = await search(
+        query_type=SearchType.GRAPH_COMPLETION, 
+        query_text="Tell me about NLP"
+    )
+    
+    for result in search_results:
+        print("Search result:", result)
 
-# Create a collection
-await redis_adapter.create_collection("my_collection")
-
-# Add data points
-from cognee.infrastructure.engine import DataPoint
-
-data_points = [
-    DataPoint(id="1", text="Hello world", metadata={"index_fields": ["text"]}),
-    DataPoint(id="2", text="Redis vector search", metadata={"index_fields": ["text"]})
-]
-
-await redis_adapter.create_data_points("my_collection", data_points)
-
-# Search for similar vectors
-results = await redis_adapter.search(
-    collection_name="my_collection",
-    query_text="Hello Redis",
-    limit=10
-)
-
-# Search with pre-computed vector
-query_vector = await redis_adapter.embed_data(["Hello Redis"])
-results = await redis_adapter.search(
-    collection_name="my_collection",
-    query_vector=query_vector[0],
-    limit=10,
-    with_vector=True  # Include vectors in results
-)
-
-# Batch search
-results = await redis_adapter.batch_search(
-    collection_name="my_collection", 
-    query_texts=["query1", "query2"],
-    limit=5
-)
-
-# Retrieve specific data points
-retrieved = await redis_adapter.retrieve(
-    collection_name="my_collection",
-    data_point_ids=["1", "2"]
-)
-
-# Delete data points
-await redis_adapter.delete_data_points(
-    collection_name="my_collection",
-    data_point_ids=["1"]
-)
-
-# Check if collection exists
-exists = await redis_adapter.has_collection("my_collection")
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 ## Configuration
 
-The Redis adapter supports the following configuration options:
+Configure Redis as your vector database in cognee:
 
-- `url`: Redis connection URL (e.g., "redis://localhost:6379", "redis://user:pass@host:port")
-- `embedding_engine`: The `EmbeddingEngine` to use for text vectorization (required)
-- `api_key`: Optional API key parameter (not used for Redis but part of the interface)
+- `vector_db_provider`: Set to "redis"
+- `vector_db_url`: Redis connection URL (e.g., "redis://localhost:6379")
+- `vector_db_key`: Optional API key parameter (for compatibility, not used by Redis)
+
+### Environment Variables
+
+Set the following environment variables or pass them directly in the config:
+
+```bash
+export VECTOR_DB_URL="redis://localhost:6379"
+export VECTOR_DB_KEY="optional-key"  # Not used by Redis
+```
 
 ### Connection URL Examples
 
 ```python
 # Local Redis
-redis_adapter = RedisAdapter(url="redis://localhost:6379", embedding_engine=engine)
+config.set_vector_db_config({
+    "vector_db_provider": "redis",
+    "vector_db_url": "redis://localhost:6379"
+})
 
 # Redis with authentication
-redis_adapter = RedisAdapter(url="redis://user:password@localhost:6379", embedding_engine=engine)
+config.set_vector_db_config({
+    "vector_db_provider": "redis", 
+    "vector_db_url": "redis://user:password@localhost:6379"
+})
 
 # Redis with SSL
-redis_adapter = RedisAdapter(url="rediss://localhost:6380", embedding_engine=engine)
+config.set_vector_db_config({
+    "vector_db_provider": "redis",
+    "vector_db_url": "rediss://localhost:6380"
+})
 ```
 
+## Requirements
+
+- Python >= 3.11, <= 3.13
+- redisvl >= 0.6.0, <= 1.0.0
+- cognee >= 0.2.0.dev0
+
+## Advanced Usage
+
+For direct adapter usage (advanced users only):
+
+```python
+from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import EmbeddingEngine
+from cognee_community_vector_adapter_redis import RedisAdapter
+from cognee.infrastructure.engine import DataPoint
+
+# Initialize embedding engine and adapter
+embedding_engine = EmbeddingEngine(model="your-model")
+redis_adapter = RedisAdapter(
+    url="redis://localhost:6379",
+    embedding_engine=embedding_engine
+)
+
+# Direct adapter operations
+await redis_adapter.create_collection("my_collection")
+data_points = [DataPoint(id="1", text="Hello", metadata={"index_fields": ["text"]})]
+await redis_adapter.create_data_points("my_collection", data_points)
+results = await redis_adapter.search("my_collection", query_text="Hello", limit=10)
+```
 
 ## Error Handling
 
