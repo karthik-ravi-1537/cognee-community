@@ -1,15 +1,9 @@
 import os
-import sys
 import asyncio
 import pathlib
 
-######### Needed only for this example, not to be used in production code.
-packages_module_path = os.path.join(pathlib.Path(__file__).parent.parent.parent.parent)
-sys.path.append(packages_module_path)
-#########
-
 # NOTE: Importing the register module we let cognee know it can use the Weaviate vector adapter
-import packages.vector.weaviate.cognee_community_vector_adapter_weaviate.register
+from cognee_community_vector_adapter_weaviate import register
 
 async def main():
     from cognee import config, prune, add, cognify, search, SearchType
