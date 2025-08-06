@@ -21,7 +21,7 @@ async def main():
         "vector_db_key": os.getenv("VECTOR_DB_KEY"),
     })
     config.set_graph_db_config({
-        "graph_database_provider": "networkx",
+        "graph_database_provider": "kuzu",
     })
 
     await prune.prune_data()
