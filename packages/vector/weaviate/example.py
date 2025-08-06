@@ -9,8 +9,8 @@ async def main():
     from cognee import config, prune, add, cognify, search, SearchType
 
     system_path = pathlib.Path(__file__).parent
-    config.system_root_directory(os.path.join(system_path, ".cognee-system"))
-    config.data_root_directory(os.path.join(system_path, ".cognee-data"))
+    config.system_root_directory(os.path.join(system_path, ".cognee_system"))
+    config.data_root_directory(os.path.join(system_path, ".cognee_data"))
 
     config.set_relational_db_config({
         "db_provider": "sqlite",

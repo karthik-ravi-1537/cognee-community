@@ -13,5 +13,10 @@ wheels/
 .env
 
 # Cognee system
+# for backward compatibility
 .cognee-data
 .cognee-system
+
+# for new version
+.cognee_data
+.cognee_system
