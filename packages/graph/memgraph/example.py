@@ -1,10 +1,10 @@
 """Example usage of the Memgraph community adapter for Cognee."""
 
 import asyncio
-import os
 import cognee
 from cognee_community_graph_adapter_memgraph import register
-
+import pathlib
+import os
 
 async def main():
     # Register the Memgraph community adapter
@@ -15,13 +15,16 @@ async def main():
     
     # Set up your Memgraph connection
     # Make sure you have Memgraph running on localhost:7687
-    cognee.config.set_graph_database_url("bolt://localhost:7687")
-    cognee.config.set_graph_database_username("memgraph")
-    cognee.config.set_graph_database_password("memgraph")
+    cognee.config.set_graph_db_config({
+        "graph_database_url": "bolt://localhost:7687",
+        "graph_database_username": "memgraph",
+        "graph_database_password": "memgraph"
+    })
     
     # Optional: Set custom data and system directories
-    cognee.config.data_root_directory("./data")
-    cognee.config.system_root_directory("./system")
+    system_path = pathlib.Path(__file__).parent
+    cognee.config.system_root_directory(os.path.join(system_path, ".cognee_system"))
+    cognee.config.data_root_directory(os.path.join(system_path, ".cognee_data"))
     
     # Sample data to add to the knowledge graph
     sample_data = [

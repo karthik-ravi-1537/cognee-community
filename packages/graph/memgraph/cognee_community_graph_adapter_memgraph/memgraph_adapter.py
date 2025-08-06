@@ -153,14 +153,13 @@ class MemgraphAdapter(GraphDBInterface):
 
         query = """
         MERGE (node {id: $node_id})
-        ON CREATE SET node:$node_label, node += $properties, node.updated_at = timestamp()
-        ON MATCH SET node:$node_label, node += $properties, node.updated_at = timestamp()
+        ON CREATE SET node += $properties, node.updated_at = timestamp()
+        ON MATCH SET node += $properties, node.updated_at = timestamp()
         RETURN ID(node) AS internal_id, node.id AS nodeId
         """
 
         params = {
             "node_id": str(node.id),
-            "node_label": type(node).__name__,
             "properties": serialized_properties,
         }
         return await self.query(query, params)
@@ -183,15 +182,14 @@ class MemgraphAdapter(GraphDBInterface):
         query = """
         UNWIND $nodes AS node
         MERGE (n {id: node.node_id})
-        ON CREATE SET n:node.label, n += node.properties, n.updated_at = timestamp()
-        ON MATCH SET n:node.label, n += node.properties, n.updated_at = timestamp()
+        ON CREATE SET n += node.properties, n.updated_at = timestamp()
+        ON MATCH SET n += node.properties, n.updated_at = timestamp()
         RETURN ID(n) AS internal_id, n.id AS nodeId
         """
 
         nodes = [
             {
                 "node_id": str(node.id),
-                "label": type(node).__name__,
                 "properties": self.serialize_properties(node.model_dump()),
             }
             for node in nodes
