@@ -71,11 +71,13 @@ export VECTOR_DB_URL="https://your-weaviate-instance.weaviate.network"
 export VECTOR_DB_KEY="your-api-key"
 ```
 
+**Alternative:** You can also use the [`.env.template`](https://github.com/topoteretes/cognee/blob/main/.env.template) file from the main cognee repository. Copy it to your project directory, rename it to `.env`, and fill in your Weaviate configuration values.
+
 ## Requirements
 
 - Python >= 3.11, <= 3.13
 - weaviate-client >= 4.9.6, < 5.0.0
-- cognee >= 0.1.41
+- cognee >= 0.2.1
 
 ## Features
 
