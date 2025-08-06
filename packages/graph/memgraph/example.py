@@ -24,7 +24,7 @@ async def main():
     # Optional: Set custom data and system directories
     system_path = pathlib.Path(__file__).parent
     cognee.config.system_root_directory(os.path.join(system_path, ".cognee_system"))
-    cognee.config.data_root_directory(os.path.join(system_path, ".cognee_data"))
+    cognee.config.data_root_directory(os.path.join(system_path, ".data_storage"))
     
     # Sample data to add to the knowledge graph
     sample_data = [
