@@ -20,3 +20,4 @@ wheels/
 # for new version
 .cognee_data
 .cognee_system
+.data_storage
