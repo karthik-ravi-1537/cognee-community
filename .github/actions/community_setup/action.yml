@@ -36,7 +36,13 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.package-path }}
-        poetry install --no-interaction
+        if [ "${{ inputs.run-mypy }}" = "true" ]; then
+          echo "Installing with dev dependencies (mypy requested)..."
+          poetry install --no-interaction --with dev
+        else
+          echo "Installing main dependencies only..."
+          poetry install --no-interaction
+        fi
       working-directory: ./
 
     - name: Verify installation
