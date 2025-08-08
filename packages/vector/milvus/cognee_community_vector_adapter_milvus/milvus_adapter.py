@@ -9,6 +9,7 @@ from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import Em
 from cognee.infrastructure.engine import DataPoint
 from cognee.shared.logging_utils import get_logger
 from cognee.infrastructure.files.storage import get_file_storage
+from pymilvus.orm.types import DataType
 
 logger = get_logger("MilvusAdapter")
 
@@ -128,14 +129,19 @@ class MilvusAdapter:
         client = self.get_milvus_client()
         
         # Define the schema for the collection
-        schema = {
-            "fields": [
-                {"name": "id", "dtype": "VARCHAR", "is_primary": True, "max_length": 65535},
-                {"name": "vector", "dtype": "FLOAT_VECTOR", "dim": 1536},  # OpenAI embedding dimension
-                {"name": "text", "dtype": "VARCHAR", "max_length": 65535},
-                {"name": "metadata", "dtype": "JSON"}
-            ]
-        }
+        schema = client.create_schema()
+        # Determine vector dimension from embedding engine if available
+        vector_dim = 1536
+        if hasattr(self.embedding_engine, "get_vector_size"):
+            try:
+                vector_dim = self.embedding_engine.get_vector_size()
+            except Exception:
+                pass
+        # create_schema can't accept fields array due to reserved kwarg name
+        schema.add_field("id", DataType.VARCHAR, is_primary=True, max_length=65535)
+        schema.add_field("vector", DataType.FLOAT_VECTOR, dim=vector_dim)
+        schema.add_field("text", DataType.VARCHAR, max_length=65535)
+        schema.add_field("metadata", DataType.JSON)
         
         try:
             client.create_collection(
@@ -206,23 +212,30 @@ class MilvusAdapter:
             None
         """
         client = self.get_milvus_client()
+
+        collection_name = f"{collection_name}_{field_name}"
+        
+        if not self.has_collection(collection_name):
+            await self.create_collection(collection_name)
+
+        index_params = client.prepare_index_params(
+                field_name="vector",
+                index_type="IVF_FLAT",
+                metric_type="COSINE",
+                params={"nlist": 1024},
+            )
         
         try:
             client.create_index(
                 collection_name=collection_name,
-                field_name=field_name,
-                index_params={
-                    "metric_type": "COSINE",
-                    "index_type": "IVF_FLAT",
-                    "params": {"nlist": 1024}
-                }
+                index_params=index_params,
             )
             logger.info(f"Created vector index on field {field_name} in collection: {collection_name}")
         except Exception as e:
             logger.error(f"Error creating vector index in collection {collection_name}: {e}")
             raise
 
-    async def index_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
+    async def index_data_points(self, index_name: str, field_name: str, data_points: List[DataPoint]) -> None:
         """
         Index data points in the collection.
 
@@ -330,7 +343,7 @@ class MilvusAdapter:
                 collection_name=collection_name,
                 data=[search_vector],
                 anns_field="vector",
-                param=search_params,
+                search_params=search_params,
                 limit=limit,
                 output_fields=["id", "text", "metadata"]
             )
@@ -393,7 +406,7 @@ class MilvusAdapter:
                 collection_name=collection_name,
                 data=query_vectors,
                 anns_field="vector",
-                param=search_params,
+                search_params=search_params,
                 limit=limit,
                 output_fields=["id", "text", "metadata"]
             )
