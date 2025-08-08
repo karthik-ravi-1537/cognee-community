@@ -19,11 +19,6 @@ jobs:
   test-milvus:
     name: "Milvus Community Adapter Test"
     runs-on: ubuntu-22.04
-    services:
-      milvus:
-        image: milvusdb/milvus:v2.4.15
-        ports:
-          - "19530:19530"
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -34,16 +29,24 @@ jobs:
           python-version: '3.11.x'
           package-path: packages/vector/milvus
 
-      - name: Wait for Milvus
+      - name: Start Milvus using official script
         run: |
-          for i in {1..30}; do
-            if curl -f http://localhost:19530/health 2>/dev/null; then
+          curl -sfL https://raw.githubusercontent.com/milvus-io/milvus/master/scripts/standalone_embed.sh -o standalone_embed.sh
+          bash standalone_embed.sh start
+          echo "Milvus started with official script"
+
+      - name: Wait for Milvus to be ready
+        run: |
+          for i in {1..60}; do
+            if curl -f http://localhost:9091/healthz 2>/dev/null; then
               echo "Milvus is ready"
               break
             fi
-            echo "Waiting for Milvus..."
+            echo "Waiting for Milvus... (attempt $i/60)"
             sleep 5
           done
+          # Verify Milvus is actually responding
+          curl -f curl -f http://localhost:9091/healthz || (echo "Milvus failed to start" && exit 1)
 
       - name: Run Milvus Tests
         env:
