@@ -28,6 +28,8 @@ jobs:
         with:
           python-version: '3.11.x'
           package-path: packages/vector/milvus
+          run-mypy: 'true'
+          mypy-target: '.'
 
       - name: Start Milvus using official script
         run: |

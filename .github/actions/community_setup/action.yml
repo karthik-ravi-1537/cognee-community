@@ -9,6 +9,14 @@ inputs:
   package-path:
     description: "Path to the package directory (e.g., packages/vector/qdrant)"
     required: true
+  run-mypy:
+    description: "Whether to run mypy type checking"
+    required: false
+    default: "false"
+  mypy-target:
+    description: "Target file/directory for mypy (relative to package-path)"
+    required: false
+    default: "."
 
 runs:
   using: "composite"
@@ -36,4 +44,14 @@ runs:
       run: |
         cd ${{ inputs.package-path }}
         poetry run python -c "import cognee; print('Cognee imported successfully')"
+      working-directory: ./
+
+    - name: Run mypy type checking
+      if: ${{ inputs.run-mypy == 'true' }}
+      shell: bash
+      run: |
+        cd ${{ inputs.package-path }}
+        echo "Running mypy type checking on ${{ inputs.mypy-target }}..."
+        poetry run python -m mypy ${{ inputs.mypy-target }}
+        echo "✅ MyPy type checking passed!"
       working-directory: ./ 

@@ -6,7 +6,7 @@ from os import path
 # Please provide an OpenAI API Key
 os.environ.setdefault("LLM_API_KEY", "")
 
-async def main():
+async def main() -> None:
     from cognee import config, prune, add, cognify, search, SearchType
     # NOTE: Importing the register module we let cognee know it can use the Milvus vector adapter
     from cognee_community_vector_adapter_milvus import register
