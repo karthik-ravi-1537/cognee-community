@@ -215,7 +215,7 @@ class MilvusAdapter:
 
         collection_name = f"{collection_name}_{field_name}"
         
-        if not self.has_collection(collection_name):
+        if not await self.has_collection(collection_name):
             await self.create_collection(collection_name)
 
         index_params = client.prepare_index_params(
@@ -316,6 +316,17 @@ class MilvusAdapter:
         --------
             List[Dict[str, object]]: List of search results.
         """
+        # TODO: Redis also falls back like this. Consider why we pass 0 as limit
+        # Validate limit parameter
+        if limit <= 0:
+            logger.warning(f"Invalid limit {limit}, returning empty results (defaulting to 10)")
+            limit = 10
+        
+        # TODO: brute_force_search passes non-existent collections like FunctionDefinition_text. Redis handles similarly
+        if not await self.has_collection(collection_name):
+            logger.warning(f"Collection {collection_name} not found, returning empty results")
+            return []
+            
         # Determine the query vector
         if query_vector is not None:
             # Use provided vector directly
