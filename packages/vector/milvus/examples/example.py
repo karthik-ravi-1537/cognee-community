@@ -19,7 +19,7 @@ async def main():
     # Please provide your Milvus instance url or local path
     config.set_vector_db_config({
         "vector_db_provider": "milvus",
-        "vector_db_url": os.getenv("MILVUS_URL", "localhost:19530"),
+        "vector_db_url": os.getenv("MILVUS_URL", "http://localhost:19530"),
         "vector_db_key": os.getenv("MILVUS_KEY", ""),
     })
 
