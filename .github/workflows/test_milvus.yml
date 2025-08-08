@@ -59,9 +59,4 @@ jobs:
           VECTOR_DB_PROVIDER: 'milvus'
           VECTOR_DB_URL: 'http://localhost:19530'
         working-directory: ./packages/vector/milvus
-        run: |
-          if [ -f "examples/milvus_example.py" ]; then
-            poetry run python examples/milvus_example.py
-          else
-            poetry run python example.py
-          fi 
+        run: poetry run python examples/example.py
