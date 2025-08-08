@@ -38,7 +38,7 @@ runs:
         cd ${{ inputs.package-path }}
         if [ "${{ inputs.run-mypy }}" = "true" ]; then
           echo "Installing with dev dependencies (mypy requested)..."
-          poetry install --no-interaction --with dev
+          poetry install --no-interaction --extras dev
         else
           echo "Installing main dependencies only..."
           poetry install --no-interaction
