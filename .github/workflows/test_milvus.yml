@@ -37,16 +37,29 @@ jobs:
 
       - name: Wait for Milvus to be ready
         run: |
+          echo "Waiting for Milvus container to be healthy..."
           for i in {1..60}; do
-            if curl -f http://localhost:9091/healthz 2>/dev/null; then
-              echo "Milvus is ready"
+            # Check Docker container health status (like the script does)
+            if sudo docker ps | grep milvus-standalone | grep healthy; then
+              echo "Milvus container is healthy"
               break
             fi
-            echo "Waiting for Milvus... (attempt $i/60)"
+            echo "Waiting for Milvus container to be healthy... (attempt $i/60)"
             sleep 5
           done
-          # Verify Milvus is actually responding
-          curl -f curl -f http://localhost:9091/healthz || (echo "Milvus failed to start" && exit 1)
+          
+          # Double-check with health endpoint
+          for i in {1..30}; do
+            if curl -f http://localhost:9091/healthz 2>/dev/null; then
+              echo "Milvus health endpoint is ready"
+              break
+            fi
+            echo "Waiting for Milvus health endpoint... (attempt $i/30)"
+            sleep 2
+          done
+          
+          # Final verification
+          curl -f http://localhost:9091/healthz || (echo "Milvus failed to start properly" && exit 1)
 
       - name: Run Milvus Tests
         env:
