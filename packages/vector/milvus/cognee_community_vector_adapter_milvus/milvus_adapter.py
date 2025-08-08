@@ -1,9 +1,10 @@
 import os
-import tempfile
-from typing import List, Dict, Optional, Any
-from uuid import UUID
+from typing import List, Dict, Optional, TYPE_CHECKING, cast
 
-from cognee.infrastructure.databases.vector.vector_db_interface import VectorDBInterface
+from pymilvus import MilvusClient
+
+if TYPE_CHECKING:
+    from cognee.infrastructure.databases.vector.vector_db_interface import VectorDBInterface
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import EmbeddingEngine
 from cognee.infrastructure.engine import DataPoint
 from cognee.shared.logging_utils import get_logger
@@ -12,11 +13,12 @@ from cognee.infrastructure.files.storage import get_file_storage
 logger = get_logger("MilvusAdapter")
 
 
-class MilvusAdapter(VectorDBInterface):
+class MilvusAdapter:
     """
     Interface for interacting with a Milvus vector database.
-
-    This adapter provides methods for managing collections, creating data points,
+    
+    This adapter conforms to the VectorDBInterface protocol by implementing
+    all required methods for managing collections, creating data points,
     searching, and other vector database operations using Milvus.
 
     Public methods:
@@ -41,7 +43,7 @@ class MilvusAdapter(VectorDBInterface):
         self.api_key = api_key
         self.embedding_engine = embedding_engine
 
-    def get_milvus_client(self):
+    def get_milvus_client(self) -> MilvusClient:
         """
         Retrieve a Milvus client instance.
 
@@ -51,7 +53,6 @@ class MilvusAdapter(VectorDBInterface):
         --------
             A MilvusClient instance.
         """
-        from pymilvus import MilvusClient
 
         # Ensure the parent directory exists for local file-based Milvus databases
         if not self.url.startswith("http"):
@@ -88,9 +89,10 @@ class MilvusAdapter(VectorDBInterface):
         --------
             List[List[float]]: List of embedding vectors.
         """
-        return await self.embedding_engine.embed_text(data)
+        result = await self.embedding_engine.embed_text(data)
+        return cast(List[List[float]], result)
 
-    def has_collection(self, collection_name: str) -> bool:
+    async def has_collection(self, collection_name: str) -> bool:
         """
         Check if a collection exists in the Milvus database.
 
@@ -110,7 +112,7 @@ class MilvusAdapter(VectorDBInterface):
             logger.error(f"Error checking collection existence: {e}")
             return False
 
-    async def create_collection(self, collection_name: str, payload_schema=None):
+    async def create_collection(self, collection_name: str, payload_schema: Optional[object] = None) -> None:
         """
         Create a new collection in the Milvus database.
 
@@ -145,7 +147,7 @@ class MilvusAdapter(VectorDBInterface):
             logger.error(f"Error creating collection {collection_name}: {e}")
             raise
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
         """
         Create data points in the Milvus collection.
 
@@ -190,7 +192,7 @@ class MilvusAdapter(VectorDBInterface):
             logger.error(f"Error inserting data points into collection {collection_name}: {e}")
             raise
 
-    async def create_vector_index(self, collection_name: str, field_name: str = "vector"):
+    async def create_vector_index(self, collection_name: str, field_name: str = "vector") -> None:
         """
         Create a vector index on the specified field.
 
@@ -220,7 +222,7 @@ class MilvusAdapter(VectorDBInterface):
             logger.error(f"Error creating vector index in collection {collection_name}: {e}")
             raise
 
-    async def index_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def index_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
         """
         Index data points in the collection.
 
@@ -279,29 +281,38 @@ class MilvusAdapter(VectorDBInterface):
     async def search(
         self,
         collection_name: str,
-        query_text: str,
+        query_text: Optional[str] = None,
+        query_vector: Optional[List[float]] = None,
         limit: int = 10,
         with_vector: bool = False,
-        **kwargs
-    ) -> List[Dict]:
+        **kwargs: object
+    ) -> List[Dict[str, object]]:
         """
         Search for similar vectors in the collection.
 
         Parameters:
         -----------
             collection_name (str): Name of the collection to search.
-            query_text (str): Text to search for.
+            query_text (Optional[str]): Text to search for.
+            query_vector (Optional[List[float]]): Vector to search for.
             limit (int): Maximum number of results to return.
             with_vector (bool): Whether to include vectors in results.
-            **kwargs: Additional search parameters.
+            **kwargs: object: Additional search parameters.
 
         Returns:
         --------
-            List[Dict]: List of search results.
+            List[Dict[str, object]]: List of search results.
         """
-        # Embed the query text
-        query_vectors = await self.embed_data([query_text])
-        query_vector = query_vectors[0]
+        # Determine the query vector
+        if query_vector is not None:
+            # Use provided vector directly
+            search_vector = query_vector
+        elif query_text is not None:
+            # Embed the query text
+            query_vectors = await self.embed_data([query_text])
+            search_vector = query_vectors[0]
+        else:
+            raise ValueError("Either query_text or query_vector must be provided")
         
         client = self.get_milvus_client()
         
@@ -317,7 +328,7 @@ class MilvusAdapter(VectorDBInterface):
             
             results = client.search(
                 collection_name=collection_name,
-                data=[query_vector],
+                data=[search_vector],
                 anns_field="vector",
                 param=search_params,
                 limit=limit,
@@ -346,8 +357,9 @@ class MilvusAdapter(VectorDBInterface):
         collection_name: str,
         query_texts: List[str],
         limit: int = 10,
-        **kwargs
-    ) -> List[List[Dict]]:
+        with_vectors: bool = False,
+        **kwargs: object
+    ) -> List[List[Dict[str, object]]]:
         """
         Perform batch search for multiple query texts.
 
@@ -356,7 +368,7 @@ class MilvusAdapter(VectorDBInterface):
             collection_name (str): Name of the collection to search.
             query_texts (List[str]): List of texts to search for.
             limit (int): Maximum number of results per query.
-            **kwargs: Additional search parameters.
+            **kwargs: object: Additional search parameters.
 
         Returns:
         --------
@@ -404,7 +416,7 @@ class MilvusAdapter(VectorDBInterface):
             logger.error(f"Error performing batch search in collection {collection_name}: {e}")
             raise
 
-    async def delete_data_points(self, collection_name: str, data_point_ids: List[str]):
+    async def delete_data_points(self, collection_name: str, data_point_ids: List[str]) -> None:
         """
         Delete data points from the collection.
 
@@ -429,7 +441,7 @@ class MilvusAdapter(VectorDBInterface):
             logger.error(f"Error deleting data points from collection {collection_name}: {e}")
             raise
 
-    async def prune(self):
+    async def prune(self) -> None:
         """
         Clean up resources and close connections.
 
@@ -458,4 +470,7 @@ class MilvusAdapter(VectorDBInterface):
         """
         # This is a placeholder implementation
         # In a real implementation, you would calculate actual distances
-        return [0.0] * len(elements) 
+        return [0.0] * len(elements)
+
+if TYPE_CHECKING:
+    _: VectorDBInterface = MilvusAdapter("", None, None) 
