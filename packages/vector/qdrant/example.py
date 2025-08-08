@@ -1,33 +1,28 @@
-import sys
 import asyncio
 import pathlib
 from os import path
-
-######### Needed only for this example, not to be used in production code.
-packages_module_path = path.join(pathlib.Path(__file__).parent.parent.parent.parent)
-sys.path.append(packages_module_path)
-#########
+import os
 
 # NOTE: Importing the register module we let cognee know it can use the Qdrant vector adapter
-import packages.vector.qdrant.register
+from cognee_community_vector_adapter_qdrant import register
 
 async def main():
     from cognee import config, prune, add, cognify, search, SearchType
 
     system_path = pathlib.Path(__file__).parent
-    config.system_root_directory(path.join(system_path, ".cognee-system"))
-    config.data_root_directory(path.join(system_path, ".cognee-data"))
+    config.system_root_directory(path.join(system_path, ".cognee_system"))
+    config.data_root_directory(path.join(system_path, ".data_storage"))
 
     config.set_relational_db_config({
         "db_provider": "sqlite",
     })
     config.set_vector_db_config({
         "vector_db_provider": "qdrant",
-        "vector_db_url": "https://43bd21b6-d34c-417e-a8b7-5ecbcb181841.europe-west3-0.gcp.cloud.qdrant.io:6333",
-        "vector_db_key": "559Qm1ZOE_kXEq6ElP-RxKt3fYj1wmVL0LMImzhsm1UfnQ0zHum--g",
+        "vector_db_url": os.getenv("QDRANT_API_URL", "http://localhost:6333"),
+        "vector_db_key": os.getenv("QDRANT_API_KEY", ""),
     })
     config.set_graph_db_config({
-        "graph_database_provider": "networkx",
+        "graph_database_provider": "kuzu",
     })
 
     await prune.prune_data()
