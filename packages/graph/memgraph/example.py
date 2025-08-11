@@ -44,7 +44,7 @@ async def main():
         
         print("Searching for insights...")
         search_results = await cognee.search(
-            query_type=cognee.SearchType.INSIGHTS,
+            query_type=cognee.SearchType.GRAPH_COMPLETION,
             query_text="artificial intelligence"
         )
         
