@@ -52,15 +52,19 @@ async def main():
         for i, result in enumerate(search_results, 1):
             print(f"{i}. {result}")
             
-        print("\nSearching for chunks...")
-        chunk_results = await cognee.search(
-            query_type=cognee.SearchType.CHUNKS,
-            query_text="machine learning"
+        print("\nSearching with Chain of Thought reasoning...")
+        cot_results = await cognee.search(
+            query_type=cognee.SearchType.GRAPH_COMPLETION_COT,
+            query_text="How does machine learning relate to artificial intelligence and what are its applications?"
         )
-        
-        print(f"Found {len(chunk_results)} chunks:")
-        for i, result in enumerate(chunk_results, 1):
+
+        print(f"Found {len(cot_results)} Chain of Thought results:")
+        for i, result in enumerate(cot_results, 1):
             print(f"{i}. {result}")
+
+        print("\nVisualizing the graph...")
+        await cognee.visualize_graph(system_path / "graph.html")
+        print(f"Graph visualization saved to {system_path / 'graph.html'}")
             
     except Exception as e:
         print(f"Error: {e}")
