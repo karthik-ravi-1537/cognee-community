@@ -15,11 +15,11 @@ on:
         type: string
   push:
     branches: [ main, dev ]
-  pull_request:
-    branches: [ main, dev ]
+  # Removed pull_request trigger to avoid testing everything on every PR
+  # Individual adapter tests will run based on their specific path triggers
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
