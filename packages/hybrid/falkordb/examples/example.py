@@ -13,7 +13,7 @@ async def main():
 
     system_path = pathlib.Path(__file__).parent
     config.system_root_directory(path.join(system_path, ".cognee_system"))
-    config.data_root_directory(path.join(system_path, ".cognee_data"))
+    config.data_root_directory(path.join(system_path, ".data_storage"))
 
     config.set_graph_db_config({
         "graph_database_provider": "falkordb",
