@@ -19,10 +19,16 @@ async def main():
         "graph_database_provider": "falkordb",
     })
 
+    config.set_vector_db_config({
+        "vector_db_provider": "falkordb",
+        "vector_db_url": "localhost",
+        "vector_db_port": 6379,
+    })
+
     # Please provide your Falkor instance configuration
     config.set_graph_db_config({
-        "graph_database_url": os.getenv("GRAPH_DB_URL", "localhost:6379"),
-        "graph_database_port": int(os.getenv("GRAPH_DB_PORT", "6379")),
+        "graph_database_url": "localhost",
+        "graph_database_port": 6379,
     })
     await prune.prune_data()
     await prune.prune_system()
