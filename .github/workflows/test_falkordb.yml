@@ -1,0 +1,68 @@
+name: Test FalkorDB Community Adapter
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'packages/hybrid/falkordb/**'
+  pull_request:
+    branches: [ main, dev ]
+    paths:
+      - 'packages/hybrid/falkordb/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-falkordb:
+    name: "FalkorDB Community Adapter Test"
+    runs-on: ubuntu-22.04
+    services:
+      falkordb:
+        image: falkordb/falkordb:edge
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Community Setup
+        uses: ./.github/actions/community_setup
+        with:
+          python-version: '3.11.x'
+          package-path: packages/hybrid/falkordb
+
+      - name: Wait for FalkorDB
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 6379; then
+              echo "FalkorDB is ready"
+              break
+            fi
+            echo "Waiting for FalkorDB..."
+            sleep 2
+          done
+
+      - name: Run FalkorDB Tests
+        env:
+          ENV: 'dev'
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          LLM_ENDPOINT: ${{ secrets.LLM_ENDPOINT }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_API_VERSION: ${{ secrets.LLM_API_VERSION }}
+          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
+          EMBEDDING_ENDPOINT: ${{ secrets.EMBEDDING_ENDPOINT }}
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          EMBEDDING_API_VERSION: ${{ secrets.EMBEDDING_API_VERSION }}
+          GRAPH_DATABASE_PROVIDER: 'falkordb'
+          GRAPH_DB_URL: 'localhost'
+          GRAPH_DB_PORT: '6379'
+        working-directory: ./packages/hybrid/falkordb
+        run: poetry run python examples/example.py
