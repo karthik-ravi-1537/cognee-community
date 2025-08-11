@@ -2,9 +2,11 @@
 
 import asyncio
 import cognee
+from cognee.infrastructure.databases.graph import get_graph_engine
 from cognee_community_graph_adapter_memgraph import register
 import pathlib
 import os
+import pprint
 
 async def main():
     # Register the Memgraph community adapter
@@ -53,19 +55,25 @@ async def main():
             print(f"{i}. {result}")
             
         print("\nSearching with Chain of Thought reasoning...")
-        cot_results = await cognee.search(
+        await cognee.search(
             query_type=cognee.SearchType.GRAPH_COMPLETION_COT,
             query_text="How does machine learning relate to artificial intelligence and what are its applications?"
         )
 
-        print(f"Found {len(cot_results)} Chain of Thought results:")
-        for i, result in enumerate(cot_results, 1):
-            print(f"{i}. {result}")
+        print("\nYou can get the graph data directly, or visualize it in an HTML file like below:")
+        
+        # Get graph data directly
+        graph_engine = await get_graph_engine()
+        graph_data = await graph_engine.get_graph_data()
+        
+        print("\nDirect graph data:")
+        pprint.pprint(graph_data)
 
+        # Or visualize it in HTML
         print("\nVisualizing the graph...")
         await cognee.visualize_graph(system_path / "graph.html")
         print(f"Graph visualization saved to {system_path / 'graph.html'}")
-            
+
     except Exception as e:
         print(f"Error: {e}")
         print("Make sure Memgraph is running and accessible at bolt://localhost:7687")
