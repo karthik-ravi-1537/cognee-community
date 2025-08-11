@@ -166,9 +166,6 @@ Negotiation and Relationship Building
 
 
 async def main(enable_steps):
-    # Register the Memgraph community adapter
-    register()
-    
     # Configure cognee to use Memgraph
     cognee.config.set_graph_database_provider("memgraph")
     
