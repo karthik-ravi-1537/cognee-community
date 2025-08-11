@@ -61,4 +61,4 @@ jobs:
           GRAPH_DATABASE_PROVIDER: 'memgraph'
           GRAPH_DB_URL: 'bolt://localhost:7687'
         working-directory: ./packages/graph/memgraph
-        run: poetry run python example.py 
+        run: poetry run python examples/example.py
