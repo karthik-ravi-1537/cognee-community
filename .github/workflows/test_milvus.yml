@@ -1,0 +1,80 @@
+name: Test Milvus Community Adapter
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'packages/vector/milvus/**'
+  pull_request:
+    branches: [ main, dev ]
+    paths:
+      - 'packages/vector/milvus/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-milvus:
+    name: "Milvus Community Adapter Test"
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Community Setup
+        uses: ./.github/actions/community_setup
+        with:
+          python-version: '3.11.x'
+          package-path: packages/vector/milvus
+          run-mypy: 'true'
+          mypy-target: '.'
+
+      - name: Start Milvus using official script
+        run: |
+          curl -sfL https://raw.githubusercontent.com/milvus-io/milvus/master/scripts/standalone_embed.sh -o standalone_embed.sh
+          bash standalone_embed.sh start
+          echo "Milvus started with official script"
+
+      - name: Wait for Milvus to be ready
+        run: |
+          echo "Waiting for Milvus container to be healthy..."
+          for i in {1..60}; do
+            # Check Docker container health status (like the script does)
+            if sudo docker ps | grep milvus-standalone | grep healthy; then
+              echo "Milvus container is healthy"
+              break
+            fi
+            echo "Waiting for Milvus container to be healthy... (attempt $i/60)"
+            sleep 5
+          done
+          
+          # Double-check with health endpoint
+          for i in {1..30}; do
+            if curl -f http://localhost:9091/healthz 2>/dev/null; then
+              echo "Milvus health endpoint is ready"
+              break
+            fi
+            echo "Waiting for Milvus health endpoint... (attempt $i/30)"
+            sleep 2
+          done
+          
+          # Final verification
+          curl -f http://localhost:9091/healthz || (echo "Milvus failed to start properly" && exit 1)
+
+      - name: Run Milvus Tests
+        env:
+          ENV: 'dev'
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          LLM_ENDPOINT: ${{ secrets.LLM_ENDPOINT }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_API_VERSION: ${{ secrets.LLM_API_VERSION }}
+          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
+          EMBEDDING_ENDPOINT: ${{ secrets.EMBEDDING_ENDPOINT }}
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          EMBEDDING_API_VERSION: ${{ secrets.EMBEDDING_API_VERSION }}
+          VECTOR_DB_PROVIDER: 'milvus'
+          VECTOR_DB_URL: 'http://localhost:19530'
+        working-directory: ./packages/vector/milvus
+        run: poetry run python examples/example.py
