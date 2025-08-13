@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-22.04
     services:
       memgraph:
-        image: memgraph/memgraph-mage
+        image: memgraph/memgraph:2.20.1
         ports:
           - 7687:7687
         env:
