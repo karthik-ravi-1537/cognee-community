@@ -15,9 +15,7 @@ on:
         type: string
   push:
     branches: [ main, dev ]
-  pull_request:
-    branches: [ main, dev ]
-
+  
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
