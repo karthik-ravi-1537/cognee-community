@@ -1,19 +1,37 @@
 name: Test Qdrant Community Adapter
 
 on:
+  workflow_call:
+    secrets:
+      LLM_MODEL:
+        required: true
+      LLM_ENDPOINT:
+        required: true
+      LLM_API_KEY:
+        required: true
+      LLM_API_VERSION:
+        required: true
+      EMBEDDING_MODEL:
+        required: true
+      EMBEDDING_ENDPOINT:
+        required: true
+      EMBEDDING_API_KEY:
+        required: true
+      EMBEDDING_API_VERSION:
+        required: true
+      QDRANT_API_URL:
+        required: true
+      QDRANT_API_KEY:
+        required: true
   workflow_dispatch:
-  push:
-    branches: [ main, dev ]
-    paths:
-      - 'packages/vector/qdrant/**'
   pull_request:
     branches: [ main, dev ]
     paths:
       - 'packages/vector/qdrant/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: qdrant-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test-qdrant:
@@ -28,6 +46,13 @@ jobs:
         with:
           python-version: '3.11.x'
           package-path: packages/vector/qdrant
+
+      - name: Debug Qdrant Configuration
+        run: |
+          echo "QDRANT_API_URL is set: ${{ secrets.QDRANT_API_URL != '' }}"
+          echo "QDRANT_API_KEY is set: ${{ secrets.QDRANT_API_KEY != '' }}"
+          echo "Testing connectivity to Qdrant..."
+          curl -f "${{ secrets.QDRANT_API_URL }}/health" -H "api-key: ${{ secrets.QDRANT_API_KEY }}" || echo "Connection failed"
 
       - name: Run Qdrant Tests
         env:

@@ -1,19 +1,33 @@
 name: Test Redis Community Adapter
 
 on:
+  workflow_call:
+    secrets:
+      LLM_MODEL:
+        required: true
+      LLM_ENDPOINT:
+        required: true
+      LLM_API_KEY:
+        required: true
+      LLM_API_VERSION:
+        required: true
+      EMBEDDING_MODEL:
+        required: true
+      EMBEDDING_ENDPOINT:
+        required: true
+      EMBEDDING_API_KEY:
+        required: true
+      EMBEDDING_API_VERSION:
+        required: true
   workflow_dispatch:
-  push:
-    branches: [ main, dev ]
-    paths:
-      - 'packages/vector/redis/**'
   pull_request:
     branches: [ main, dev ]
     paths:
       - 'packages/vector/redis/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: redis-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test-redis:
@@ -33,6 +47,18 @@ jobs:
         with:
           python-version: '3.11.x'
           package-path: packages/vector/redis
+
+      - name: Wait for Redis to be ready
+        run: |
+          echo "Waiting for Redis to be ready..."
+          for i in {1..30}; do
+            if nc -z localhost 6379; then
+              echo "Redis is ready!"
+              break
+            fi
+            echo "Redis not ready yet... (attempt $i/30)"
+            sleep 2
+          done
 
       - name: Run Redis Tests
         env:

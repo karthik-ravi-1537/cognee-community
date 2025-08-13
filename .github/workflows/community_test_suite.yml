@@ -15,9 +15,7 @@ on:
         type: string
   push:
     branches: [ main, dev ]
-  # Removed pull_request trigger to avoid testing everything on every PR
-  # Individual adapter tests will run based on their specific path triggers
-
+  
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
