@@ -1,4 +1,5 @@
 import os
+import asyncio
 from typing import List, Dict, Optional, TYPE_CHECKING, cast
 
 from pymilvus import MilvusClient
@@ -43,6 +44,7 @@ class MilvusAdapter:
         self.url = url
         self.api_key = api_key
         self.embedding_engine = embedding_engine
+        self.VECTOR_DB_LOCK = asyncio.Lock()
 
     def get_milvus_client(self) -> MilvusClient:
         """
@@ -126,33 +128,38 @@ class MilvusAdapter:
         --------
             None
         """
-        client = self.get_milvus_client()
-        
-        # Define the schema for the collection
-        schema = client.create_schema()
-        # Determine vector dimension from embedding engine if available
-        vector_dim = 1536
-        if hasattr(self.embedding_engine, "get_vector_size"):
+        async with self.VECTOR_DB_LOCK:
+            client = self.get_milvus_client()
+            
+            # Check if collection already exists
+            if await self.has_collection(collection_name):
+                return
+            
+            # Define the schema for the collection
+            schema = client.create_schema()
+            # Determine vector dimension from embedding engine if available
+            vector_dim = 1536
+            if hasattr(self.embedding_engine, "get_vector_size"):
+                try:
+                    vector_dim = self.embedding_engine.get_vector_size()
+                except Exception as e:
+                    logger.error(f"Failed to get vector dimension from embedding engine: {e}")
+                    raise
+            # create_schema can't accept fields array due to reserved kwarg name
+            schema.add_field("id", DataType.VARCHAR, is_primary=True, max_length=65535)
+            schema.add_field("vector", DataType.FLOAT_VECTOR, dim=vector_dim)
+            schema.add_field("text", DataType.VARCHAR, max_length=65535)
+            schema.add_field("metadata", DataType.JSON)
+            
             try:
-                vector_dim = self.embedding_engine.get_vector_size()
+                client.create_collection(
+                    collection_name=collection_name,
+                    schema=schema
+                )
+                logger.info(f"Created collection: {collection_name}")
             except Exception as e:
-                logger.error(f"Failed to get vector dimension from embedding engine: {e}")
+                logger.error(f"Error creating collection {collection_name}: {e}")
                 raise
-        # create_schema can't accept fields array due to reserved kwarg name
-        schema.add_field("id", DataType.VARCHAR, is_primary=True, max_length=65535)
-        schema.add_field("vector", DataType.FLOAT_VECTOR, dim=vector_dim)
-        schema.add_field("text", DataType.VARCHAR, max_length=65535)
-        schema.add_field("metadata", DataType.JSON)
-        
-        try:
-            client.create_collection(
-                collection_name=collection_name,
-                schema=schema
-            )
-            logger.info(f"Created collection: {collection_name}")
-        except Exception as e:
-            logger.error(f"Error creating collection {collection_name}: {e}")
-            raise
 
     async def create_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
         """

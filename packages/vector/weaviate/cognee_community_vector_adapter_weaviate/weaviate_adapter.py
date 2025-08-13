@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Optional
 
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
@@ -78,6 +79,7 @@ class WeaviateAdapter(VectorDBInterface):
         self.api_key = api_key
 
         self.embedding_engine = embedding_engine
+        self.VECTOR_DB_LOCK = asyncio.Lock()
 
         self.client = weaviate.use_async_with_weaviate_cloud(
             cluster_url=url,
@@ -168,18 +170,19 @@ class WeaviateAdapter(VectorDBInterface):
         """
         import weaviate.classes.config as wvcc
 
-        if not await self.has_collection(collection_name):
-            client = await self.get_client()
-            return await client.collections.create(
-                name=collection_name,
-                properties=[
-                    wvcc.Property(
-                        name="text", data_type=wvcc.DataType.TEXT, skip_vectorization=True
-                    )
-                ],
-            )
-        else:
-            return await self.get_collection(collection_name)
+        async with self.VECTOR_DB_LOCK:
+            if not await self.has_collection(collection_name):
+                client = await self.get_client()
+                return await client.collections.create(
+                    name=collection_name,
+                    properties=[
+                        wvcc.Property(
+                            name="text", data_type=wvcc.DataType.TEXT, skip_vectorization=True
+                        )
+                    ],
+                )
+            else:
+                return await self.get_collection(collection_name)
 
     async def get_collection(self, collection_name: str):
         """

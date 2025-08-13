@@ -95,6 +95,7 @@ class RedisAdapter(VectorDBInterface):
         self.url = url
         self.embedding_engine = embedding_engine
         self._indices = {}
+        self.VECTOR_DB_LOCK = asyncio.Lock()
         
     async def embed_data(self, data: List[str]) -> List[List[float]]:
         """Embed text data using the embedding engine.
@@ -191,19 +192,20 @@ class RedisAdapter(VectorDBInterface):
         Raises:
             Exception: If collection creation fails.
         """
-        try:
-            if await self.has_collection(collection_name):
-                logger.info(f"Collection {collection_name} already exists")
-                return
-            
-            index = self._get_index(collection_name)
-            await index.create(overwrite=False)
-            
-            logger.info(f"Created collection {collection_name}")
-            
-        except Exception as e:
-            logger.error(f"Error creating collection {collection_name}: {str(e)}")
-            raise e
+        async with self.VECTOR_DB_LOCK:
+            try:
+                if await self.has_collection(collection_name):
+                    logger.info(f"Collection {collection_name} already exists")
+                    return
+                
+                index = self._get_index(collection_name)
+                await index.create(overwrite=False)
+                
+                logger.info(f"Created collection {collection_name}")
+                
+            except Exception as e:
+                logger.error(f"Error creating collection {collection_name}: {str(e)}")
+                raise e
     
     async def create_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
         """Create data points in the collection.

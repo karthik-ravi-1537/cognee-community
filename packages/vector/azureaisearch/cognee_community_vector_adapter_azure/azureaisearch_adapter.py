@@ -65,6 +65,7 @@ class AzureAISearchAdapter(VectorDBInterface):
         self.embedding_engine = embedding_engine
         self.credential = AzureKeyCredential(api_key)
         self.index_client = SearchIndexClient(endpoint=self.endpoint, credential=self.credential)
+        self.VECTOR_DB_LOCK = asyncio.Lock()
 
     def _sanitize_index_name(self, name: str) -> str:
         """
@@ -128,70 +129,71 @@ class AzureAISearchAdapter(VectorDBInterface):
 
     async def create_collection(self, collection_name: str, payload_schema=None):
         """Create a new search index with vector search configuration."""
-        sanitized_name = self._sanitize_index_name(collection_name)
+        async with self.VECTOR_DB_LOCK:
+            sanitized_name = self._sanitize_index_name(collection_name)
 
-        if await self.has_collection(collection_name):
-            return
+            if await self.has_collection(collection_name):
+                return
 
-        vector_size = self.embedding_engine.get_vector_size()
+            vector_size = self.embedding_engine.get_vector_size()
 
-        # Define the fields for the index
-        fields = [
-            SimpleField(
-                name="id",
-                type=SearchFieldDataType.String,
-                key=True,
-                filterable=True,
-            ),
-            SearchableField(
-                name="text",
-                type=SearchFieldDataType.String,
-                searchable=True,
-            ),
-            SearchField(
-                name="vector",
-                type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
-                searchable=True,
-                vector_search_dimensions=vector_size,
-                vector_search_profile_name="vector-profile",
-            ),
-            # Add a generic payload field to store the entire data point
-            SimpleField(
-                name="payload",
-                type=SearchFieldDataType.String,
-                searchable=False,
-            ),
-        ]
+            # Define the fields for the index
+            fields = [
+                SimpleField(
+                    name="id",
+                    type=SearchFieldDataType.String,
+                    key=True,
+                    filterable=True,
+                ),
+                SearchableField(
+                    name="text",
+                    type=SearchFieldDataType.String,
+                    searchable=True,
+                ),
+                SearchField(
+                    name="vector",
+                    type=SearchFieldDataType.Collection(SearchFieldDataType.Single),
+                    searchable=True,
+                    vector_search_dimensions=vector_size,
+                    vector_search_profile_name="vector-profile",
+                ),
+                # Add a generic payload field to store the entire data point
+                SimpleField(
+                    name="payload",
+                    type=SearchFieldDataType.String,
+                    searchable=False,
+                ),
+            ]
 
-        # Configure vector search
-        vector_search = VectorSearch(
-            algorithms=[
-                HnswAlgorithmConfiguration(
-                    name="hnsw-algorithm",
-                    parameters={
-                        "m": 4,
-                        "efConstruction": 400,
-                        "efSearch": 500,
-                        "metric": "cosine",
-                    },
-                )
-            ],
-            profiles=[
-                VectorSearchProfile(
-                    name="vector-profile",
-                    algorithm_configuration_name="hnsw-algorithm",
-                )
-            ],
-        )
+            # Configure vector search
+            vector_search = VectorSearch(
+                algorithms=[
+                    HnswAlgorithmConfiguration(
+                        name="hnsw-algorithm",
+                        parameters={
+                            "m": 4,
+                            "efConstruction": 400,
+                            "efSearch": 500,
+                            "metric": "cosine",
+                        },
+                    )
+                ],
+                profiles=[
+                    VectorSearchProfile(
+                        name="vector-profile",
+                        algorithm_configuration_name="hnsw-algorithm",
+                    )
+                ],
+            )
 
-        # Create the search index
-        index = SearchIndex(
-            name=sanitized_name,
-            fields=fields,
-            vector_search=vector_search,
-        )
+            # Create the search index
+            index = SearchIndex(
+                name=sanitized_name,
+                fields=fields,
+                vector_search=vector_search,
+            )
 
-        self.index_client.create_or_update_index(index)
+            self.index_client.create_or_update_index(index)
 
     async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
         """Upload data points to the search index."""

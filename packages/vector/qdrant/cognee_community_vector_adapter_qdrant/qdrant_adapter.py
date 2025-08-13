@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, List, Optional
 from qdrant_client import AsyncQdrantClient, models
 
@@ -53,6 +54,7 @@ class QDrantAdapter(VectorDBInterface):
         else:
             self.url = url
             self.api_key = api_key
+        self.VECTOR_DB_LOCK = asyncio.Lock()
 
     def get_qdrant_client(self) -> AsyncQdrantClient:
         if self.qdrant_path is not None:
@@ -76,19 +78,20 @@ class QDrantAdapter(VectorDBInterface):
         collection_name: str,
         payload_schema=None,
     ):
-        client = self.get_qdrant_client()
+        async with self.VECTOR_DB_LOCK:
+            client = self.get_qdrant_client()
 
-        if not await client.collection_exists(collection_name):
-            await client.create_collection(
-                collection_name=collection_name,
-                vectors_config={
-                    "text": models.VectorParams(
-                        size=self.embedding_engine.get_vector_size(), distance="Cosine"
-                    )
-                },
-            )
+            if not await client.collection_exists(collection_name):
+                await client.create_collection(
+                    collection_name=collection_name,
+                    vectors_config={
+                        "text": models.VectorParams(
+                            size=self.embedding_engine.get_vector_size(), distance="Cosine"
+                        )
+                    },
+                )
 
-        await client.close()
+            await client.close()
 
     async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
         from qdrant_client.http.exceptions import UnexpectedResponse
