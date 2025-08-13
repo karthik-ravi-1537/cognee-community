@@ -26,8 +26,8 @@ on:
       - 'packages/vector/redis/**'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: redis-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   test-redis:
