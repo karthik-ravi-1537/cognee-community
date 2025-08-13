@@ -18,7 +18,7 @@ async def main():
     })
     config.set_vector_db_config({
         "vector_db_provider": "qdrant",
-        "vector_db_url": os.getenv("QDRANT_API_URL", "http://localhost:4626"),
+        "vector_db_url": os.getenv("QDRANT_API_URL", "http://localhost:6333"),
         "vector_db_key": os.getenv("QDRANT_API_KEY", ""),
     })
     config.set_graph_db_config({
