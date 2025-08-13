@@ -61,20 +61,4 @@ jobs:
           GRAPH_DATABASE_PROVIDER: 'memgraph'
           GRAPH_DB_URL: 'bolt://localhost:7687'
         working-directory: ./packages/graph/memgraph
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Files in current directory:"
-          ls -la
-          echo "Files in examples directory:"
-          ls -la examples/ || echo "examples directory not found"
-          
-          if [ -f "examples/example.py" ]; then
-            echo "Running examples/example.py"
-            poetry run python examples/example.py
-          elif [ -f "example.py" ]; then
-            echo "Running example.py"
-            poetry run python example.py
-          else
-            echo "Neither examples/example.py nor example.py found!"
-            exit 1
-          fi
+        run: poetry run python examples/example.py
