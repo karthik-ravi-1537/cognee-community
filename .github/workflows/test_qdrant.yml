@@ -47,6 +47,13 @@ jobs:
           python-version: '3.11.x'
           package-path: packages/vector/qdrant
 
+      - name: Debug Qdrant Configuration
+        run: |
+          echo "QDRANT_API_URL is set: ${{ secrets.QDRANT_API_URL != '' }}"
+          echo "QDRANT_API_KEY is set: ${{ secrets.QDRANT_API_KEY != '' }}"
+          echo "Testing connectivity to Qdrant..."
+          curl -f "${{ secrets.QDRANT_API_URL }}/health" -H "api-key: ${{ secrets.QDRANT_API_KEY }}" || echo "Connection failed"
+
       - name: Run Qdrant Tests
         env:
           ENV: 'dev'
