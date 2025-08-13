@@ -17,8 +17,8 @@ async def main():
     })
     config.set_vector_db_config({
         "vector_db_provider": "weaviate",
-        "vector_db_url": os.getenv("VECTOR_DB_URL"),
-        "vector_db_key": os.getenv("VECTOR_DB_KEY"),
+        "vector_db_url": os.getenv("WEAVIATE_API_URL"),
+        "vector_db_key": os.getenv("WEAVIATE_API_KEY"),
     })
     config.set_graph_db_config({
         "graph_database_provider": "kuzu",
