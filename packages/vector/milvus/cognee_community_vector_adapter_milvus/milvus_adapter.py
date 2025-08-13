@@ -135,8 +135,9 @@ class MilvusAdapter:
         if hasattr(self.embedding_engine, "get_vector_size"):
             try:
                 vector_dim = self.embedding_engine.get_vector_size()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to get vector dimension from embedding engine: {e}")
+                raise
         # create_schema can't accept fields array due to reserved kwarg name
         schema.add_field("id", DataType.VARCHAR, is_primary=True, max_length=65535)
         schema.add_field("vector", DataType.FLOAT_VECTOR, dim=vector_dim)
