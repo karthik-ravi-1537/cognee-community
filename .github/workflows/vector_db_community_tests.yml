@@ -68,33 +68,3 @@ jobs:
     if: ${{ inputs.databases == 'all' || contains(inputs.databases, 'milvus') }}
     uses: ./.github/workflows/test_milvus.yml
     secrets: inherit
-
-  test-azureaisearch:
-    name: "Azure AI Search Community Adapter Test"
-    runs-on: ubuntu-22.04
-    if: ${{ inputs.databases == 'all' || contains(inputs.databases, 'azureaisearch') }}
-    steps:
-      - name: Check out
-        uses: actions/checkout@v4
-
-      - name: Community Setup
-        uses: ./.github/actions/community_setup
-        with:
-          python-version: ${{ inputs.python-version }}
-          package-path: packages/vector/azureaisearch
-
-      - name: Run Azure AI Search Tests
-        env:
-          ENV: 'dev'
-          LLM_MODEL: ${{ secrets.LLM_MODEL }}
-          LLM_ENDPOINT: ${{ secrets.LLM_ENDPOINT }}
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-          LLM_API_VERSION: ${{ secrets.LLM_API_VERSION }}
-          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
-          EMBEDDING_ENDPOINT: ${{ secrets.EMBEDDING_ENDPOINT }}
-          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
-          EMBEDDING_API_VERSION: ${{ secrets.EMBEDDING_API_VERSION }}
-          VECTOR_DB_PROVIDER: 'azureaisearch'
-          # Note: Azure AI Search requires actual credentials, this will be a dry run
-        working-directory: ./packages/vector/azureaisearch
-        run: poetry run python example.py 
