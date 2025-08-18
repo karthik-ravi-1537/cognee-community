@@ -77,6 +77,7 @@ class OpenSearchAdapter(VectorDBInterface):
         self.final_endpoint = final_endpoint
         self.embedding_engine = embedding_engine
         self.index_prefix =index_prefix
+        self.VECTOR_DB_LOCK = asyncio.Lock()
         self.client = AsyncOpenSearch(
             hosts=[self.final_endpoint],
             http_auth=http_auth,
@@ -144,32 +145,33 @@ class OpenSearchAdapter(VectorDBInterface):
             - collection_name (str): The name of the collection to create.
             - payload_schema: Optional schema for the payload.
         """
-        index = self._get_index_name(collection_name)
-        if not await self.has_collection(collection_name):
-            vector_size = self.embedding_engine.get_vector_size()
-            body = {
-                "settings": {
-                    "index": {
-                        "knn": True
-                    }
-                },
-                "mappings": {
-                    "properties": {
-                        "id": {"type": "keyword"},
-                        "payload": {"type": "object"},
-                        "vector": {
-                            "type": "knn_vector",
-                            "dimension": vector_size,
-                            "method": {
-                                "name": "hnsw",
-                                "space_type": "cosinesimil",
-                                "engine": "nmslib"
+        async with self.VECTOR_DB_LOCK:
+            index = self._get_index_name(collection_name)
+            if not await self.has_collection(collection_name):
+                vector_size = self.embedding_engine.get_vector_size()
+                body = {
+                    "settings": {
+                        "index": {
+                            "knn": True
+                        }
+                    },
+                    "mappings": {
+                        "properties": {
+                            "id": {"type": "keyword"},
+                            "payload": {"type": "object"},
+                            "vector": {
+                                "type": "knn_vector",
+                                "dimension": vector_size,
+                                "method": {
+                                    "name": "hnsw",
+                                    "space_type": "cosinesimil",
+                                    "engine": "nmslib"
+                                }
                             }
                         }
                     }
                 }
-            }
-            await self.client.indices.create(index=index, body=body)
+                await self.client.indices.create(index=index, body=body)
 
     async def create_vector_index(self, index_name: str, index_property_name: str):
         """
