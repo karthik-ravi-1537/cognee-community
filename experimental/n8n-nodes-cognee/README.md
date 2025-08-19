@@ -1,12 +1,12 @@
 # n8n-nodes-cognee
 
-Use cogwit, cognee's knowledge-graph-powered memory engine directly in your n8n workflows.
+Use AI memory and context engineering, built by cognee directly in your n8n workflows.
 
 This community node lets you:
 
-- Add text data to a Cognee dataset
-- Trigger cognify to build a knowledge graph over your datasets
-- Run search over your Cognified datasets (graph completion, chain-of-thought, or RAG)
+- Add text data to a your cognee
+- Turn data into AI memory with cognify to apply best context engineering practices
+- Run search over your AI memory datasets
 
 [n8n](https://n8n.io/) is a fair-code licensed workflow automation platform.
 

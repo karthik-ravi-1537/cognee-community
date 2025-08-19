@@ -1,19 +1,19 @@
 {
   "name": "n8n-nodes-cognee",
-  "version": "0.1.0",
-  "description": "n8n node to call Cognee's Cogwit API and its services",
+  "version": "0.1.1",
+  "description": "n8n node to call Cognee's AI Memory Cogwit API and its services",
   "keywords": [
     "n8n-community-node-package"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/hande-k/n8n-nodes-cognee",
+  "homepage": "https://github.com/topoteretes/cognee-community/tree/main/experimental/n8n-nodes-cognee",
   "author": {
-    "name": "test",
-    "email": "test@test.com"
+    "name": "Laszlo Hajdu PHD",
+    "email": "laszlo@topoteretes.com"
   },
   "repository": {
     "type": "git",
-    "url": "THIS HAS TO BE CHANGED TO THE FINAL REPO LINK"
+    "url": "https://github.com/topoteretes/cognee-community.git"
   },
   "engines": {
     "node": ">=20.15"
