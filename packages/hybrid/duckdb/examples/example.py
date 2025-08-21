@@ -6,7 +6,7 @@ from os import path
 # Please provide an API Key if needed
 os.environ.setdefault("LLM_API_KEY", "")
 
-async def main():
+async def main() -> None:
     from cognee import config, prune, add, cognify, search, SearchType
     # NOTE: Importing the register module we let cognee know it can use the Falkor graph adapter
     from cognee_community_hybrid_adapter_duckdb import register
