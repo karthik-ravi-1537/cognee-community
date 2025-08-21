@@ -1,11 +1,12 @@
 [project]
-name = "duckdb"
+name = "cognee-community-hybrid-adapter-duckdb"
 version = "0.1.0"
-description = "Add your description here"
+description = "DuckDB hybrid adapter for Cognee - implements both vector and graph database interfaces"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "cognee>=0.2.3",
+    "duckdb>=1.3.2",
     "mypy>=1.17.1",
 ]
 
