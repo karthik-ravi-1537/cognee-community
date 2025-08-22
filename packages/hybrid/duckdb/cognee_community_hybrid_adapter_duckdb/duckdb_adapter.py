@@ -74,7 +74,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         if url:
             self.connection = duckdb.connect(url)
         else:
-            self.connection = duckdb.connect()  # In-memory database
+            self.connection = duckdb.connect('md:my_db')  # In-memory database
     
     async def _execute_query(self, query: str, params: Optional[List[Any]] = None) -> Any:
         """Execute a query on the DuckDB connection with async lock."""
@@ -133,14 +133,14 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         except Exception:
             return False
     
-    async def create_collection(self, collection_name: str) -> None:
+    async def create_collection(self, collection_name: str, vector_dimension: int = 3072) -> None:
         """[VECTOR] Create a new collection (table) in DuckDB."""
-        # Example: Create a table for storing vector data
+        # Create a table for storing vector data with specified dimension
         create_table_query = f"""
         CREATE TABLE IF NOT EXISTS {collection_name} (
             id VARCHAR PRIMARY KEY,
             text TEXT,
-            vector DOUBLE[],
+            vector FLOAT[{vector_dimension}],
             payload JSON,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -236,7 +236,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             raise InvalidValueError("One of query_text or query_vector must be provided!")
         
         if limit <= 0:
-            return []
+            limit = 15
         
         if not await self.has_collection(collection_name):
             logger.warning(f"Collection '{collection_name}' not found in DuckDBAdapter.search; returning [].")
@@ -247,52 +247,49 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             if query_vector is None and query_text is not None:
                 query_vector = (await self.embed_data([query_text]))[0]
             
-            # For now, implement basic similarity search using cosine similarity
-            # Note: DuckDB doesn't have built-in vector similarity functions like specialized vector DBs
-            # This is a simplified implementation - in production you might want to use a proper vector extension
+            # Ensure we have a query vector at this point
+            if query_vector is None:
+                raise InvalidValueError("Could not obtain query vector from text or vector input")
             
-            # Get all vectors from the collection
-            query = f"SELECT id, text, vector, payload FROM {collection_name}"
-            all_results = await self._execute_query(query)
+            # Use DuckDB's native array_distance function for efficient vector search
+            # Convert query vector to DuckDB array format with proper dimension
+            # pprint.pprint(query_vector)
+            vector_dimension = len(query_vector)
+            vector_str = f"[{','.join(map(str, query_vector))}]::FLOAT[{vector_dimension}]"
             
-            if not all_results:
+            # Execute vector similarity search using array_distance
+            search_query = f"""
+            SELECT id, text, vector, payload, array_distance(vector, {vector_str}) as distance
+            FROM {collection_name}
+            ORDER BY distance ASC
+            LIMIT {limit}
+            """
+            
+            search_results = await self._execute_query(search_query)
+            
+            if not search_results:
                 return []
             
-            # Calculate similarities (simplified cosine similarity)
-            scored_results = []
-            for row in all_results:
-                doc_id, text, vector_str, payload_str = row
+            # Convert results to ScoredResult objects
+            results = []
+            for row in search_results:
+                # Convert distance to similarity score (lower distance = higher similarity)
+                # Using 1/(1+distance) to convert distance to similarity score between 0 and 1
+                distance = row[4]  # distance is the 5th column (index 4)
+                similarity_score = 1.0 / (1.0 + distance) if distance >= 0 else 0.0
                 
-                try:
-                    # Parse vector and payload
-                    doc_vector = json.loads(vector_str) if isinstance(vector_str, str) else vector_str
-                    payload = json.loads(payload_str) if isinstance(payload_str, str) else payload_str
-                    
-                    # Calculate cosine similarity (simplified)
-                    if query_vector and doc_vector:
-                        # Dot product
-                        dot_product = sum(a * b for a, b in zip(query_vector, doc_vector))
-                        # Magnitudes
-                        mag_a = sum(a * a for a in query_vector) ** 0.5
-                        mag_b = sum(b * b for b in doc_vector) ** 0.5
-                        
-                        # Cosine similarity (higher is better)
-                        similarity = dot_product / (mag_a * mag_b) if mag_a * mag_b > 0 else 0.0
-                        
-                        scored_results.append(
-                            ScoredResult(
-                                id=parse_id(doc_id),
-                                payload=payload,
-                                score=similarity
-                            )
-                        )
-                except (json.JSONDecodeError, TypeError, ValueError) as e:
-                    logger.warning(f"Failed to process document {doc_id}: {e}")
-                    continue
+                # Parse the payload JSON
+                payload_data = json.loads(row[3]) if row[3] else {}
+                
+                result = ScoredResult(
+                    id=parse_id(row[0]),
+                    score=similarity_score,
+                    payload=payload_data,
+                    vector=row[2] if with_vector else None
+                )
+                results.append(result)
             
-            # Sort by similarity (descending) and limit results
-            scored_results.sort(key=lambda x: x.score, reverse=True)
-            return scored_results[:limit]
+            return results
             
         except Exception as e:
             logger.error(f"Error during search: {str(e)}")
@@ -323,11 +320,8 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         
         results = await asyncio.gather(*search_tasks)
         
-        # Filter results by score threshold (cosine similarity, so higher is better)
-        return [
-            [result for result in result_group if result.score > 0.7]  # Similarity threshold
-            for result_group in results
-        ]
+        # Return all results (consistent with individual search method behavior)
+        return results
     
     async def delete_data_points(self, collection_name: str, data_point_ids: List[str]) -> Dict[str, int]:
         """[VECTOR] Delete data points by their IDs."""
