@@ -17,7 +17,7 @@ async def cognee_demo():
     # Please provide your Milvus instance url or local path
     cognee.config.set_vector_db_config({
         "vector_db_provider": "duckdb",
-        "vector_db_url": "cognee_simple_document_demo.db",
+        "vector_db_url": None,
         # "vector_db_port": 6379,
     })
 
