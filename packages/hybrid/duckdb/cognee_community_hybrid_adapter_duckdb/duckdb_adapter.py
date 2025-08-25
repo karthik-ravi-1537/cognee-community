@@ -386,93 +386,75 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
     # GraphDBInterface methods
     async def query(self, query: str, params: Dict[str, Any]) -> List[Any]:
         """[GRAPH] Execute a query against the graph."""
-        # TODO: Implement DuckDB graph query
-        return []
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def add_node(self, node: Union[DataPoint, str], properties: Optional[Dict[str, Any]] = None) -> None:
         """[GRAPH] Add a node to the graph."""
-        # TODO: Implement DuckDB node addition
-        pass
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def add_nodes(self, nodes: Union[List[Tuple[str, Dict[str, Any]]], List[DataPoint]]) -> None:
         """[GRAPH] Add multiple nodes to the graph."""
-        # TODO: Implement DuckDB bulk node addition
-        pass
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def delete_node(self, node_id: str) -> None:
         """[GRAPH] Delete a node from the graph."""
-        # TODO: Implement DuckDB node deletion
-        pass
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def delete_nodes(self, node_ids: List[str]) -> None:
         """[GRAPH] Delete multiple nodes from the graph."""
-        # TODO: Implement DuckDB bulk node deletion
-        pass
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
         """[GRAPH] Get a single node by its ID."""
-        # TODO: Implement DuckDB node retrieval
-        return None
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def get_nodes(self, node_ids: List[str]) -> List[Dict[str, Any]]:
         """[GRAPH] Get multiple nodes by their IDs."""
-        # TODO: Implement DuckDB bulk node retrieval
-        return []
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def add_edge(self, source_id: str, target_id: str, relationship_name: str, properties: Optional[Dict[str, Any]] = None) -> None:
         """[GRAPH] Add an edge between two nodes."""
-        # TODO: Implement DuckDB edge addition
-        pass
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def add_edges(self, edges: Union[List[Tuple[str, str, str, Dict[str, Any]]], List[Tuple[str, str, str, Optional[Dict[str, Any]]]]]) -> None:
         """[GRAPH] Add multiple edges to the graph."""
-        # TODO: Implement DuckDB bulk edge addition
-        pass
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def delete_graph(self) -> None:
         """[GRAPH] Delete the entire graph."""
-        # TODO: Implement DuckDB graph deletion
-        pass
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def get_graph_data(self) -> Tuple[List[Tuple[str, Dict[str, Any]]], List[Tuple[str, str, str, Dict[str, Any]]]]:
         """[GRAPH] Get all graph data (nodes and edges)."""
-        # TODO: Implement DuckDB graph data retrieval
-        return ([], [])
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def get_graph_metrics(self, include_optional: bool = False) -> Dict[str, Any]:
         """[GRAPH] Get graph metrics."""
-        # TODO: Implement DuckDB graph metrics
-        return {}
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def has_edge(self, source_id: str, target_id: str, relationship_name: str) -> bool:
         """[GRAPH] Check if an edge exists between two nodes."""
-        # TODO: Implement DuckDB edge existence check
-        return False
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def has_edges(self, edges: List[Tuple[str, str, str, Dict[str, Any]]]) -> List[Tuple[str, str, str, Dict[str, Any]]]:
         """[GRAPH] Check if multiple edges exist."""
-        # TODO: Implement DuckDB bulk edge existence check
-        return []
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def get_edges(self, node_id: str) -> List[Tuple[str, str, str, Dict[str, Any]]]:
         """[GRAPH] Get all edges connected to a node."""
-        # TODO: Implement DuckDB edge retrieval
-        return []
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def get_neighbors(self, node_id: str) -> List[Dict[str, Any]]:
         """[GRAPH] Get neighboring nodes."""
-        # TODO: Implement DuckDB neighbors retrieval
-        return []
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def get_nodeset_subgraph(self, node_type: Type[Any], node_name: List[str]) -> Tuple[List[Tuple[int, Dict[str, Any]]], List[Tuple[int, int, str, Dict[str, Any]]]]:
         """[GRAPH] Get a subgraph for specific node types and names."""
-        # TODO: Implement DuckDB nodeset subgraph retrieval
-        return ([], [])
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
     
     async def get_connections(self, node_id: Union[str, UUID]) -> List[Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]]:
         """[GRAPH] Get connections for a node."""
-        # TODO: Implement DuckDB connections retrieval
-        return []
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
 
 if TYPE_CHECKING:
