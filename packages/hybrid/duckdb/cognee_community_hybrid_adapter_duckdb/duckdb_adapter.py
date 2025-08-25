@@ -70,7 +70,6 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         
         # Create in-memory DuckDB connection
         # If database_url is provided, use it; otherwise use in-memory
-        print(f"DuckDBAdapter: url: {url}")
         if url:
             self.connection = duckdb.connect(url)
         else:
@@ -170,7 +169,6 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         create_data_points_query = f"""
         INSERT OR REPLACE INTO {collection_name} (id, text, vector, payload) VALUES ($1, $2, $3, $4)
         """
-        print(f"DuckDBAdapter: data_points: {[data_point.id for data_point in data_points]}")
         await self._execute_transaction(
             [(create_data_points_query, [
                 str(data_point.id), 
@@ -262,7 +260,6 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             
             # Use DuckDB's native array_distance function for efficient vector search
             # Convert query vector to DuckDB array format with proper dimension
-            # pprint.pprint(query_vector)
             vector_dimension = len(query_vector)
             vector_str = f"[{','.join(map(str, query_vector))}]::FLOAT[{vector_dimension}]"
             
