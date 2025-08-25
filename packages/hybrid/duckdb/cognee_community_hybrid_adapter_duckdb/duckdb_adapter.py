@@ -74,8 +74,17 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         if url:
             self.connection = duckdb.connect(url)
         else:
-            self.connection = duckdb.connect('md:my_db')  # In-memory database
-    
+            self.connection = duckdb.connect()  # In-memory database
+
+        self._setup_extensions()
+        
+    def _setup_extensions(self) -> None:
+        """Setup DuckDB extensions."""
+        self.connection.execute("INSTALL duckpgq FROM community;")
+        self.connection.execute("LOAD duckpgq")
+        self.connection.execute("INSTALL vss;")
+        self.connection.execute("LOAD vss;") # TODO add index: CREATE INDEX my_hnsw_index ON my_vector_table USING HNSW (vec);
+        
     async def _execute_query(self, query: str, params: Optional[List[Any]] = None) -> Any:
         """Execute a query on the DuckDB connection with async lock."""
         async with self.VECTOR_DB_LOCK:
