@@ -9,7 +9,7 @@ sys.path.append(packages_module_path)
 #########
 
 # NOTE: Importing the register module we let cognee know it can use the Networkx adapter
-import packages.graph.networkx.register
+from cognee_community_graph_adapter_networkx import register
 
 async def main():
     from cognee import config, prune, add, cognify, search, SearchType
