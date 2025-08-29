@@ -235,20 +235,40 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         limit: int = 15,
         with_vector: bool = False,
     ) -> List[ScoredResult]:
-        """[VECTOR] Search for similar vectors."""
+        """[VECTOR] Search for similar vectors.
+        
+        Args:
+            collection_name: Name of the collection to search in.
+            query_text: Text to search for (will be embedded if provided).
+            query_vector: Pre-computed query vector for search.
+            limit: Maximum number of results to return. Set to 0 to return all rows.
+            with_vector: Whether to include vectors in the results.
+            
+        Returns:
+            List of scored results ordered by similarity (highest similarity first).
+        """
         from cognee.exceptions import InvalidValueError
         from cognee.infrastructure.engine.utils import parse_id
-        
+
         if query_text is None and query_vector is None:
             raise InvalidValueError("One of query_text or query_vector must be provided!")
-        
-        if limit <= 0:
-            limit = 15
         
         if not await self.has_collection(collection_name):
             logger.warning(f"Collection '{collection_name}' not found in DuckDBAdapter.search; returning [].")
             return []
         
+        if limit == 0:
+            search_query = f"""select count(*) from {collection_name}"""
+            count = await self._execute_query_one(search_query)
+            if count is None:
+                logger.warning(f"Count is None in DuckDBAdapter.search; returning [].")
+                return []
+            limit = count[0]
+        
+        if limit == 0:
+            logger.warning(f"Limit is 0 in DuckDBAdapter.search; returning [].")
+            return []
+
         try:
             # Get the query vector
             if query_vector is None and query_text is not None:
