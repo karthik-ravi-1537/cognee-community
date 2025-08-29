@@ -15,23 +15,13 @@ async def main() -> None:
     config.system_root_directory(path.join(system_path, ".cognee_system"))
     config.data_root_directory(path.join(system_path, ".data_storage"))
 
-    # config.set_graph_db_config({
-    #     "graph_database_provider": "duckdb",
-    # })
-
     config.set_vector_db_config({
         "vector_db_provider": "duckdb",
         "vector_db_url": None,
-        # "vector_db_port": 6379,
     })
 
-    # Please provide your Falkor instance configuration
-    # config.set_graph_db_config({
-    #     "graph_database_url": "duckdb",
-    #     "graph_database_port": 6379,
-    # })
     await prune.prune_data()
-    await prune.prune_system()
+    await prune.prune_system(metadata=True)
 
     await add("""
     Natural language processing (NLP) is an interdisciplinary
