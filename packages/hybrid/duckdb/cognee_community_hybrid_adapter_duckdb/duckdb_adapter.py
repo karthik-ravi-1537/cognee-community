@@ -247,11 +247,10 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         Returns:
             List of scored results ordered by similarity (highest similarity first).
         """
-        from cognee.exceptions import InvalidValueError
         from cognee.infrastructure.engine.utils import parse_id
-
+        
         if query_text is None and query_vector is None:
-            raise InvalidValueError("One of query_text or query_vector must be provided!")
+            raise ValueError("One of query_text or query_vector must be provided!")
         
         if not await self.has_collection(collection_name):
             logger.warning(f"Collection '{collection_name}' not found in DuckDBAdapter.search; returning [].")
@@ -276,7 +275,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             
             # Ensure we have a query vector at this point
             if query_vector is None:
-                raise InvalidValueError("Could not obtain query vector from text or vector input")
+                raise ValueError("Could not obtain query vector from text or vector input")
             
             # Use DuckDB's native array_distance function for efficient vector search
             # Convert query vector to DuckDB array format with proper dimension
