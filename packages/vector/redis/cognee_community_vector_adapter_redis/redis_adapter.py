@@ -216,9 +216,7 @@ class RedisAdapter(VectorDBInterface):
             finally:
                 await index.disconnect()
 
-    async def create_data_points(
-        self, collection_name: str, data_points: List[DataPoint]
-    ) -> None:
+    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
         """Create data points in the collection.
 
         Args:
@@ -232,16 +230,11 @@ class RedisAdapter(VectorDBInterface):
         index = self._get_index(collection_name)
         try:
             if not await self.has_collection(collection_name):
-                raise CollectionNotFoundError(
-                    f"Collection {collection_name} not found!"
-                )
+                raise CollectionNotFoundError(f"Collection {collection_name} not found!")
 
             # Embed the data points
             data_vectors = await self.embed_data(
-                [
-                    DataPoint.get_embeddable_data(data_point)
-                    for data_point in data_points
-                ]
+                [DataPoint.get_embeddable_data(data_point) for data_point in data_points]
             )
 
             # Prepare documents for RedisVL
@@ -265,9 +258,7 @@ class RedisAdapter(VectorDBInterface):
             # Load using RedisVL
             await index.load(documents, id_field="id")
 
-            logger.info(
-                f"Created {len(data_points)} data points in collection {collection_name}"
-            )
+            logger.info(f"Created {len(data_points)} data points in collection {collection_name}")
 
         except Exception as e:
             logger.error(f"Error creating data points: {str(e)}")
@@ -275,9 +266,7 @@ class RedisAdapter(VectorDBInterface):
         finally:
             await index.disconnect()
 
-    async def create_vector_index(
-        self, index_name: str, index_property_name: str
-    ) -> None:
+    async def create_vector_index(self, index_name: str, index_property_name: str) -> None:
         """Create a vector index for a specific property.
 
         Args:
@@ -301,9 +290,7 @@ class RedisAdapter(VectorDBInterface):
             [
                 RedisDataPoint(
                     id=data_point.id,
-                    text=getattr(
-                        data_point, data_point.metadata.get("index_fields", ["text"])[0]
-                    ),
+                    text=getattr(data_point, data_point.metadata.get("index_fields", ["text"])[0]),
                 )
                 for data_point in data_points
             ],
@@ -424,9 +411,7 @@ class RedisAdapter(VectorDBInterface):
                     ScoredResult(
                         id=parse_id(doc["id"].split(":", 1)[1]),
                         payload=payload,
-                        score=float(
-                            doc.get("vector_distance", 0.0)
-                        ),  # RedisVL returns distance
+                        score=float(doc.get("vector_distance", 0.0)),  # RedisVL returns distance
                     )
                 )
             return scored_results
@@ -474,8 +459,7 @@ class RedisAdapter(VectorDBInterface):
 
         # Filter results by score threshold (Redis uses distance, so lower is better)
         return [
-            [result for result in result_group if result.score < 0.1]
-            for result_group in results
+            [result for result in result_group if result.score < 0.1] for result_group in results
         ]
 
     async def delete_data_points(
@@ -496,9 +480,7 @@ class RedisAdapter(VectorDBInterface):
         index = self._get_index(collection_name)
         try:
             deleted_count = await index.drop_documents(data_point_ids)
-            logger.info(
-                f"Deleted {deleted_count} data points from collection {collection_name}"
-            )
+            logger.info(f"Deleted {deleted_count} data points from collection {collection_name}")
             return {"deleted": deleted_count}
         except Exception as e:
             logger.error(f"Error deleting data points: {str(e)}")

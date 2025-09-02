@@ -201,9 +201,7 @@ class FalkorDBAdapter:
                 return f"'{escaped_value}'"
             return f"'{str(value)}'"
 
-        return ",".join(
-            [f"{key}:{parse_value(value)}" for key, value in properties.items()]
-        )
+        return ",".join([f"{key}:{parse_value(value)}" for key, value in properties.items()])
 
     async def create_data_point_query(
         self, data_point: DataPoint, vectorized_values: dict
@@ -249,11 +247,7 @@ class FalkorDBAdapter:
                     clean_properties[key] = str(value)
                 elif isinstance(value, dict):
                     clean_properties[key] = json.dumps(value)
-                elif (
-                    isinstance(value, list)
-                    and len(value) > 0
-                    and isinstance(value[0], float)
-                ):
+                elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], float):
                     # This is likely a vector - convert to string representation
                     clean_properties[key] = f"vecf32({value})"
                 else:
@@ -374,9 +368,7 @@ class FalkorDBAdapter:
         vector_map: dict[str, dict[str, int | None]] = {}
 
         for data_point in data_points:
-            property_names: list[str] = DataPoint.get_embeddable_property_names(
-                data_point
-            )
+            property_names: list[str] = DataPoint.get_embeddable_property_names(data_point)
             key = str(data_point.id)
             vector_map[key] = {}
 
@@ -400,14 +392,10 @@ class FalkorDBAdapter:
                 else:
                     vectorized_data[property_name] = None
 
-            query, params = await self.create_data_point_query(
-                data_point, vectorized_data
-            )
+            query, params = await self.create_data_point_query(data_point, vectorized_data)
             self.query(query, params)
 
-    async def create_vector_index(
-        self, index_name: str, index_property_name: str
-    ) -> None:
+    async def create_vector_index(self, index_name: str, index_property_name: str) -> None:
         """
         Create a vector index in the specified graph for a given property if it does not already
         exist.
@@ -428,9 +416,7 @@ class FalkorDBAdapter:
                 dim=self.embedding_engine.get_vector_size(),
             )
 
-    def has_vector_index(
-        self, graph: Graph, index_name: str, index_property_name: str
-    ) -> bool:
+    def has_vector_index(self, graph: Graph, index_name: str, index_property_name: str) -> bool:
         """
         Determine if a vector index exists on the specified property of the given graph.
 
@@ -491,11 +477,7 @@ class FalkorDBAdapter:
                     clean_properties[key] = str(value)
                 elif isinstance(value, dict):
                     clean_properties[key] = json.dumps(value)
-                elif (
-                    isinstance(value, list)
-                    and len(value) > 0
-                    and isinstance(value[0], float)
-                ):
+                elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], float):
                     # This is likely a vector - convert to string representation
                     clean_properties[key] = f"vecf32({value})"
                 else:
@@ -718,15 +700,11 @@ class FalkorDBAdapter:
 
         for neighbour in predecessors:
             neighbour = neighbour["relation"]
-            connections.append(
-                (neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2])
-            )
+            connections.append((neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2]))
 
         for neighbour in successors:
             neighbour = neighbour["relation"]
-            connections.append(
-                (neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2])
-            )
+            connections.append((neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2]))
 
         return connections
 
@@ -1040,9 +1018,7 @@ class FalkorDBAdapter:
                 )
         return edges
 
-    async def has_edge(
-        self, source_id: str, target_id: str, relationship_name: str
-    ) -> bool:
+    async def has_edge(self, source_id: str, target_id: str, relationship_name: str) -> bool:
         """
         Verify if an edge exists between two specified nodes.
 
@@ -1097,9 +1073,7 @@ class FalkorDBAdapter:
             "num_nodes": num_nodes,
             "num_edges": num_edges,
             "mean_degree": (2 * num_edges) / num_nodes if num_nodes > 0 else 0,
-            "edge_density": num_edges / (num_nodes * (num_nodes - 1))
-            if num_nodes > 1
-            else 0,
+            "edge_density": num_edges / (num_nodes * (num_nodes - 1)) if num_nodes > 1 else 0,
             "num_connected_components": 1,  # Simplified for now
             "sizes_of_connected_components": [num_nodes] if num_nodes > 0 else [],
         }

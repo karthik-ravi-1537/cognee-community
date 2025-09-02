@@ -85,9 +85,7 @@ class WeaviateAdapter(VectorDBInterface):
         self.client = weaviate.use_async_with_weaviate_cloud(
             cluster_url=url,
             auth_credentials=weaviate.auth.AuthApiKey(api_key),
-            additional_config=wvc.init.AdditionalConfig(
-                timeout=wvc.init.Timeout(init=30)
-            ),
+            additional_config=wvc.init.AdditionalConfig(timeout=wvc.init.Timeout(init=30)),
         )
 
     async def get_client(self):
@@ -216,9 +214,7 @@ class WeaviateAdapter(VectorDBInterface):
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=2, min=1, max=6),
     )
-    async def create_data_points(
-        self, collection_name: str, data_points: List[DataPoint]
-    ):
+    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
         """
         Create or update data points in the specified collection in the Weaviate database.
 
@@ -269,9 +265,7 @@ class WeaviateAdapter(VectorDBInterface):
 
             return DataObject(uuid=data_point.id, properties=properties, vector=vector)
 
-        data_points = [
-            convert_to_weaviate_data_points(data_point) for data_point in data_points
-        ]
+        data_points = [convert_to_weaviate_data_points(data_point) for data_point in data_points]
 
         await self.get_client()
         collection = await self.get_collection(collection_name)
@@ -427,14 +421,10 @@ class WeaviateAdapter(VectorDBInterface):
         async with weaviate.use_async_with_weaviate_cloud(
             cluster_url=self.url,
             auth_credentials=weaviate.auth.AuthApiKey(self.api_key),
-            additional_config=wvc.init.AdditionalConfig(
-                timeout=wvc.init.Timeout(init=30)
-            ),
+            additional_config=wvc.init.AdditionalConfig(timeout=wvc.init.Timeout(init=30)),
         ) as client:
             if not await client.collections.exists(collection_name):
-                raise CollectionNotFoundError(
-                    f"Collection '{collection_name}' not found."
-                )
+                raise CollectionNotFoundError(f"Collection '{collection_name}' not found.")
 
             collection = client.collections.get(collection_name)
 
@@ -511,8 +501,7 @@ class WeaviateAdapter(VectorDBInterface):
             )
 
         return [
-            await query_search(query_vector)
-            for query_vector in await self.embed_data(query_texts)
+            await query_search(query_vector) for query_vector in await self.embed_data(query_texts)
         ]
 
     async def delete_data_points(self, collection_name: str, data_point_ids: list[str]):

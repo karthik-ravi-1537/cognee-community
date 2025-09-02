@@ -21,9 +21,7 @@ async def main():
     cognee.config.data_root_directory(data_directory_path)
     cognee_directory_path = str(
         pathlib.Path(
-            os.path.join(
-                pathlib.Path(__file__).parent, ".cognee_system/test_opensearch"
-            )
+            os.path.join(pathlib.Path(__file__).parent, ".cognee_system/test_opensearch")
         ).resolve()
     )
     cognee.config.system_root_directory(cognee_directory_path)
@@ -64,9 +62,7 @@ async def main():
     for result in search_results:
         print(f"{result}\n")
 
-    search_results = await cognee.search(
-        query_type=SearchType.CHUNKS, query_text=random_node_name
-    )
+    search_results = await cognee.search(query_type=SearchType.CHUNKS, query_text=random_node_name)
     assert len(search_results) != 0, "The search results list is empty."
     print("\n\nExtracted chunks are:\n")
     for result in search_results:
@@ -89,9 +85,7 @@ async def main():
 
     await cognee.prune.prune_system(metadata=True)
 
-    indices = await vector_engine.client.indices.get(
-        index=f"{vector_engine.index_prefix}_*"
-    )
+    indices = await vector_engine.client.indices.get(index=f"{vector_engine.index_prefix}_*")
 
     assert len(indices) == 0, "OpenSearch vector database is not empty"
 

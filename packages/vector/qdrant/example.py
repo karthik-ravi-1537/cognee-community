@@ -46,9 +46,7 @@ async def main():
 
     query_text = "Tell me about NLP"
 
-    search_results = await search(
-        query_type=SearchType.GRAPH_COMPLETION, query_text=query_text
-    )
+    search_results = await search(query_type=SearchType.GRAPH_COMPLETION, query_text=query_text)
 
     for result_text in search_results:
         print(result_text)

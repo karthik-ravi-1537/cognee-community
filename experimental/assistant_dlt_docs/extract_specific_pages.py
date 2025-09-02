@@ -2,9 +2,7 @@ import re
 from typing import List, Set
 
 
-def extract_specific_pages(
-    input_files: List[str], output_file: str, main_urls: List[str]
-):
+def extract_specific_pages(input_files: List[str], output_file: str, main_urls: List[str]):
     """
     Extract specific pages and their subpages from the cleanedmarkdown files.
     """

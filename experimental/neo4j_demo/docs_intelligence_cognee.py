@@ -36,9 +36,7 @@ async def main():
     await cognee.add([aura_docs_content], node_set=node_set_aura)
 
     # 5) Load the self-managed .md file
-    self_managed_docs_path = (
-        current_dir / "neo4j_docs_operations_manual.md"
-    )  # Adjust if needed
+    self_managed_docs_path = current_dir / "neo4j_docs_operations_manual.md"  # Adjust if needed
     if not self_managed_docs_path.exists():
         raise FileNotFoundError(f"Could not find {self_managed_docs_path}")
 
@@ -49,9 +47,7 @@ async def main():
     await cognee.add([self_managed_docs_content], node_set=node_set_self_managed)
 
     # 7) Load the modelling designs .md file
-    docker_docs_path = (
-        current_dir / "neo4j_docs_operations_manual_docker.md"
-    )  # Adjust if needed
+    docker_docs_path = current_dir / "neo4j_docs_operations_manual_docker.md"  # Adjust if needed
     if not docker_docs_path.exists():
         raise FileNotFoundError(f"Could not find {docker_docs_path}")
 

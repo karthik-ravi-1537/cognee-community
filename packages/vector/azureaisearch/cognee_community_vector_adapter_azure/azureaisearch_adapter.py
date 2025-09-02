@@ -66,9 +66,7 @@ class AzureAISearchAdapter(VectorDBInterface):
         self.api_key = api_key
         self.embedding_engine = embedding_engine
         self.credential = AzureKeyCredential(api_key)
-        self.index_client = SearchIndexClient(
-            endpoint=self.endpoint, credential=self.credential
-        )
+        self.index_client = SearchIndexClient(endpoint=self.endpoint, credential=self.credential)
         self.VECTOR_DB_LOCK = asyncio.Lock()
 
     def _sanitize_index_name(self, name: str) -> str:
@@ -199,9 +197,7 @@ class AzureAISearchAdapter(VectorDBInterface):
 
             self.index_client.create_or_update_index(index)
 
-    async def create_data_points(
-        self, collection_name: str, data_points: List[DataPoint]
-    ):
+    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
         """Upload data points to the search index."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
@@ -236,15 +232,11 @@ class AzureAISearchAdapter(VectorDBInterface):
             # Check for any failures
             failed_docs = [doc for doc in result if not doc.succeeded]
             if failed_docs:
-                logger.error(
-                    f"Failed to upload {len(failed_docs)} documents to Azure AI Search"
-                )
+                logger.error(f"Failed to upload {len(failed_docs)} documents to Azure AI Search")
                 for doc in failed_docs:
                     logger.error(f"Document {doc.key} failed: {doc.error_message}")
 
-    async def retrieve(
-        self, collection_name: str, data_point_ids: List[str]
-    ) -> List[ScoredResult]:
+    async def retrieve(self, collection_name: str, data_point_ids: List[str]) -> List[ScoredResult]:
         """Retrieve documents by their IDs."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
@@ -422,9 +414,7 @@ class AzureAISearchAdapter(VectorDBInterface):
             # Check for any failures
             failed_docs = [doc for doc in result if not doc.succeeded]
             if failed_docs:
-                logger.error(
-                    f"Failed to delete {len(failed_docs)} documents from Azure AI Search"
-                )
+                logger.error(f"Failed to delete {len(failed_docs)} documents from Azure AI Search")
                 for doc in failed_docs:
                     logger.error(f"Document {doc.key} failed: {doc.error_message}")
 

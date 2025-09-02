@@ -47,9 +47,7 @@ class QDrantAdapter(VectorDBInterface):
     api_key: str = None
     qdrant_path: str = None
 
-    def __init__(
-        self, url, api_key, embedding_engine: EmbeddingEngine, qdrant_path=None
-    ):
+    def __init__(self, url, api_key, embedding_engine: EmbeddingEngine, qdrant_path=None):
         self.embedding_engine = embedding_engine
 
         if qdrant_path is not None:
@@ -97,9 +95,7 @@ class QDrantAdapter(VectorDBInterface):
 
             await client.close()
 
-    async def create_data_points(
-        self, collection_name: str, data_points: List[DataPoint]
-    ):
+    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
         from qdrant_client.http.exceptions import UnexpectedResponse
 
         client = self.get_qdrant_client()
@@ -151,9 +147,7 @@ class QDrantAdapter(VectorDBInterface):
 
     async def retrieve(self, collection_name: str, data_point_ids: list[str]):
         client = self.get_qdrant_client()
-        results = await client.retrieve(
-            collection_name, data_point_ids, with_payload=True
-        )
+        results = await client.retrieve(collection_name, data_point_ids, with_payload=True)
         await client.close()
         return results
 
@@ -247,16 +241,11 @@ class QDrantAdapter(VectorDBInterface):
         client = self.get_qdrant_client()
 
         # Perform batch search with the dynamically generated requests
-        results = await client.search_batch(
-            collection_name=collection_name, requests=requests
-        )
+        results = await client.search_batch(collection_name=collection_name, requests=requests)
 
         await client.close()
 
-        return [
-            filter(lambda result: result.score > 0.9, result_group)
-            for result_group in results
-        ]
+        return [filter(lambda result: result.score > 0.9, result_group) for result_group in results]
 
     async def delete_data_points(self, collection_name: str, data_point_ids: list[str]):
         client = self.get_qdrant_client()

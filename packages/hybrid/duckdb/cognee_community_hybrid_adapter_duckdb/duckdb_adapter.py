@@ -94,9 +94,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             "LOAD vss;"
         )  # TODO add index: CREATE INDEX my_hnsw_index ON my_vector_table USING HNSW (vec);
 
-    async def _execute_query(
-        self, query: str, params: Optional[List[Any]] = None
-    ) -> Any:
+    async def _execute_query(self, query: str, params: Optional[List[Any]] = None) -> Any:
         """Execute a query on the DuckDB connection with async lock."""
         async with self.VECTOR_DB_LOCK:
             if params:
@@ -104,9 +102,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             else:
                 return self.connection.execute(query).fetchall()
 
-    async def _execute_query_one(
-        self, query: str, params: Optional[List[Any]] = None
-    ) -> Any:
+    async def _execute_query_one(self, query: str, params: Optional[List[Any]] = None) -> Any:
         """Execute a query and return one result with async lock."""
         async with self.VECTOR_DB_LOCK:
             if params:
@@ -114,9 +110,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             else:
                 return self.connection.execute(query).fetchone()
 
-    async def _execute_transaction(
-        self, queries: List[tuple[str, Optional[List[Any]]]]
-    ) -> None:
+    async def _execute_transaction(self, queries: List[tuple[str, Optional[List[Any]]]]) -> None:
         """Execute multiple queries in a transaction with async lock."""
         async with self.VECTOR_DB_LOCK:
             try:
@@ -157,9 +151,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         except Exception:
             return False
 
-    async def create_collection(
-        self, collection_name: str, vector_dimension: int = 3072
-    ) -> None:
+    async def create_collection(self, collection_name: str, vector_dimension: int = 3072) -> None:
         """[VECTOR] Create a new collection (table) in DuckDB."""
         # Create a table for storing vector data with specified dimension
         vector_dimension = self.embedding_engine.get_vector_size()
@@ -174,9 +166,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         """
         await self._execute_query(create_table_query)
 
-    async def create_data_points(
-        self, collection_name: str, data_points: List[DataPoint]
-    ) -> None:
+    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
         """[VECTOR] Create data points in the collection."""
         # TODO: Implement DuckDB data point creation
         if not await self.has_collection(collection_name):
@@ -205,9 +195,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             ]
         )
 
-    async def create_vector_index(
-        self, index_name: str, index_property_name: str
-    ) -> None:
+    async def create_vector_index(self, index_name: str, index_property_name: str) -> None:
         """[VECTOR] Create a vector index for a specific property."""
         # TODO: Implement DuckDB vector index creation
         await self.create_collection(f"{index_name}_{index_property_name}")
@@ -221,9 +209,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             [
                 DuckDBDataPoint(
                     id=data_point.id,
-                    text=getattr(
-                        data_point, data_point.metadata.get("index_fields", ["text"])[0]
-                    ),
+                    text=getattr(data_point, data_point.metadata.get("index_fields", ["text"])[0]),
                 )
                 for data_point in data_points
             ],
@@ -249,20 +235,14 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
 
                 if result:
                     # Parse the stored payload JSON
-                    payload_str = (
-                        result[0] if isinstance(result, (list, tuple)) else result
-                    )
+                    payload_str = result[0] if isinstance(result, (list, tuple)) else result
                     try:
                         payload = json.loads(payload_str)
                         results.append(payload)
                     except (json.JSONDecodeError, TypeError):
                         # Fallback if payload parsing fails
-                        logger.warning(
-                            f"Failed to parse payload for data point {data_id}"
-                        )
-                        results.append(
-                            {"id": data_id, "error": "Failed to parse payload"}
-                        )
+                        logger.warning(f"Failed to parse payload for data point {data_id}")
+                        results.append({"id": data_id, "error": "Failed to parse payload"})
 
             return results
 
@@ -334,9 +314,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             # Use DuckDB's native array_distance function for efficient vector search
             # Convert query vector to DuckDB array format with proper dimension
             vector_dimension = self.embedding_engine.get_vector_size()
-            vector_str = (
-                f"[{','.join(map(str, query_vector))}]::FLOAT[{vector_dimension}]"
-            )
+            vector_str = f"[{','.join(map(str, query_vector))}]::FLOAT[{vector_dimension}]"
 
             # Execute vector similarity search using cosine similarity
 
@@ -424,13 +402,9 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             await self._execute_query(delete_query, data_point_ids)
 
             # Get the count of deleted rows (DuckDB doesn't return this directly, so we approximate)
-            deleted_count = len(
-                data_point_ids
-            )  # Assume all were deleted for simplicity
+            deleted_count = len(data_point_ids)  # Assume all were deleted for simplicity
 
-            logger.info(
-                f"Deleted {deleted_count} data points from collection {collection_name}"
-            )
+            logger.info(f"Deleted {deleted_count} data points from collection {collection_name}")
             return {"deleted": deleted_count}
 
         except Exception as e:
@@ -441,7 +415,9 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         """[VECTOR] Remove all collections and data."""
         try:
             # Get all table names from the database
-            tables_query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
+            tables_query = (
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
+            )
             tables_result = await self._execute_query(tables_query)
 
             if tables_result:
@@ -464,49 +440,35 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
     # GraphDBInterface methods
     async def query(self, query: str, params: Dict[str, Any]) -> List[Any]:
         """[GRAPH] Execute a query against the graph."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def add_node(
         self, node: Union[DataPoint, str], properties: Optional[Dict[str, Any]] = None
     ) -> None:
         """[GRAPH] Add a node to the graph."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def add_nodes(
         self, nodes: Union[List[Tuple[str, Dict[str, Any]]], List[DataPoint]]
     ) -> None:
         """[GRAPH] Add multiple nodes to the graph."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def delete_node(self, node_id: str) -> None:
         """[GRAPH] Delete a node from the graph."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def delete_nodes(self, node_ids: List[str]) -> None:
         """[GRAPH] Delete multiple nodes from the graph."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
         """[GRAPH] Get a single node by its ID."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def get_nodes(self, node_ids: List[str]) -> List[Dict[str, Any]]:
         """[GRAPH] Get multiple nodes by their IDs."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def add_edge(
         self,
@@ -516,9 +478,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         properties: Optional[Dict[str, Any]] = None,
     ) -> None:
         """[GRAPH] Add an edge between two nodes."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def add_edges(
         self,
@@ -528,79 +488,51 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         ],
     ) -> None:
         """[GRAPH] Add multiple edges to the graph."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def delete_graph(self) -> None:
         """[GRAPH] Delete the entire graph."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def get_graph_data(
         self,
-    ) -> Tuple[
-        List[Tuple[str, Dict[str, Any]]], List[Tuple[str, str, str, Dict[str, Any]]]
-    ]:
+    ) -> Tuple[List[Tuple[str, Dict[str, Any]]], List[Tuple[str, str, str, Dict[str, Any]]]]:
         """[GRAPH] Get all graph data (nodes and edges)."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def get_graph_metrics(self, include_optional: bool = False) -> Dict[str, Any]:
         """[GRAPH] Get graph metrics."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
-    async def has_edge(
-        self, source_id: str, target_id: str, relationship_name: str
-    ) -> bool:
+    async def has_edge(self, source_id: str, target_id: str, relationship_name: str) -> bool:
         """[GRAPH] Check if an edge exists between two nodes."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def has_edges(
         self, edges: List[Tuple[str, str, str, Dict[str, Any]]]
     ) -> List[Tuple[str, str, str, Dict[str, Any]]]:
         """[GRAPH] Check if multiple edges exist."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
-    async def get_edges(
-        self, node_id: str
-    ) -> List[Tuple[str, str, str, Dict[str, Any]]]:
+    async def get_edges(self, node_id: str) -> List[Tuple[str, str, str, Dict[str, Any]]]:
         """[GRAPH] Get all edges connected to a node."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def get_neighbors(self, node_id: str) -> List[Dict[str, Any]]:
         """[GRAPH] Get neighboring nodes."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def get_nodeset_subgraph(
         self, node_type: Type[Any], node_name: List[str]
-    ) -> Tuple[
-        List[Tuple[int, Dict[str, Any]]], List[Tuple[int, int, str, Dict[str, Any]]]
-    ]:
+    ) -> Tuple[List[Tuple[int, Dict[str, Any]]], List[Tuple[int, int, str, Dict[str, Any]]]]:
         """[GRAPH] Get a subgraph for specific node types and names."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
     async def get_connections(
         self, node_id: Union[str, UUID]
     ) -> List[Tuple[Dict[str, Any], Dict[str, Any], Dict[str, Any]]]:
         """[GRAPH] Get connections for a node."""
-        raise NotImplementedError(
-            "Graph operations are not implemented for DuckDB adapter"
-        )
+        raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
 
 if TYPE_CHECKING:

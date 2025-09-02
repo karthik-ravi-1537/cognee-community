@@ -45,9 +45,7 @@ class MilvusAdapter:
 
     name = "Milvus"
 
-    def __init__(
-        self, url: str, api_key: Optional[str], embedding_engine: EmbeddingEngine
-    ):
+    def __init__(self, url: str, api_key: Optional[str], embedding_engine: EmbeddingEngine):
         self.url = url
         self.api_key = api_key
         self.embedding_engine = embedding_engine
@@ -154,9 +152,7 @@ class MilvusAdapter:
                 try:
                     vector_dim = self.embedding_engine.get_vector_size()
                 except Exception as e:
-                    logger.error(
-                        f"Failed to get vector dimension from embedding engine: {e}"
-                    )
+                    logger.error(f"Failed to get vector dimension from embedding engine: {e}")
                     raise
             # create_schema can't accept fields array due to reserved kwarg name
             schema.add_field("id", DataType.VARCHAR, is_primary=True, max_length=65535)
@@ -171,9 +167,7 @@ class MilvusAdapter:
                 logger.error(f"Error creating collection {collection_name}: {e}")
                 raise
 
-    async def create_data_points(
-        self, collection_name: str, data_points: List[DataPoint]
-    ) -> None:
+    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
         """
         Create data points in the Milvus collection.
 
@@ -217,14 +211,10 @@ class MilvusAdapter:
                 f"Inserted {len(data_points)} data points into collection: {collection_name}"
             )
         except Exception as e:
-            logger.error(
-                f"Error inserting data points into collection {collection_name}: {e}"
-            )
+            logger.error(f"Error inserting data points into collection {collection_name}: {e}")
             raise
 
-    async def create_vector_index(
-        self, collection_name: str, field_name: str = "vector"
-    ) -> None:
+    async def create_vector_index(self, collection_name: str, field_name: str = "vector") -> None:
         """
         Create a vector index on the specified field.
 
@@ -260,9 +250,7 @@ class MilvusAdapter:
                 f"Created vector index on field {field_name} in collection: {collection_name}"
             )
         except Exception as e:
-            logger.error(
-                f"Error creating vector index in collection {collection_name}: {e}"
-            )
+            logger.error(f"Error creating vector index in collection {collection_name}: {e}")
             raise
 
     async def index_data_points(
@@ -284,9 +272,7 @@ class MilvusAdapter:
         # This method is kept for interface compatibility
         pass
 
-    async def retrieve(
-        self, collection_name: str, data_point_ids: List[str]
-    ) -> List[DataPoint]:
+    async def retrieve(self, collection_name: str, data_point_ids: List[str]) -> List[DataPoint]:
         """
         Retrieve data points by their IDs.
 
@@ -320,9 +306,7 @@ class MilvusAdapter:
 
             return data_points
         except Exception as e:
-            logger.error(
-                f"Error retrieving data points from collection {collection_name}: {e}"
-            )
+            logger.error(f"Error retrieving data points from collection {collection_name}: {e}")
             raise
 
     async def search(
@@ -353,9 +337,7 @@ class MilvusAdapter:
 
         # TODO: brute_force_search passes non-existent collections like FunctionDefinition_text. Redis handles similarly
         if not await self.has_collection(collection_name):
-            logger.warning(
-                f"Collection {collection_name} not found, returning empty results"
-            )
+            logger.warning(f"Collection {collection_name} not found, returning empty results")
             return []
 
         # Determine the query vector
@@ -466,14 +448,10 @@ class MilvusAdapter:
 
             return batch_results
         except Exception as e:
-            logger.error(
-                f"Error performing batch search in collection {collection_name}: {e}"
-            )
+            logger.error(f"Error performing batch search in collection {collection_name}: {e}")
             raise
 
-    async def delete_data_points(
-        self, collection_name: str, data_point_ids: List[str]
-    ) -> None:
+    async def delete_data_points(self, collection_name: str, data_point_ids: List[str]) -> None:
         """
         Delete data points from the collection.
 
@@ -494,9 +472,7 @@ class MilvusAdapter:
                 f"Deleted {len(data_point_ids)} data points from collection: {collection_name}"
             )
         except Exception as e:
-            logger.error(
-                f"Error deleting data points from collection {collection_name}: {e}"
-            )
+            logger.error(f"Error deleting data points from collection {collection_name}: {e}")
             raise
 
     async def prune(self) -> None:

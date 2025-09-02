@@ -70,19 +70,13 @@ class OpenSearchAdapter(VectorDBInterface):
             password = vector_db_key_decoded_dict.get("password", None)
             if username and password:
                 http_auth = (username, password)
-            use_ssl = (
-                vector_db_key_decoded_dict.get("use_ssl", "False").lower() == "true"
-            )
-            verify_certs = (
-                vector_db_key_decoded_dict.get("verify_certs", "True").lower() == "true"
-            )
+            use_ssl = vector_db_key_decoded_dict.get("use_ssl", "False").lower() == "true"
+            verify_certs = vector_db_key_decoded_dict.get("verify_certs", "True").lower() == "true"
             ssl_assert_hostname = (
-                vector_db_key_decoded_dict.get("ssl_assert_hostname", "True").lower()
-                == "true"
+                vector_db_key_decoded_dict.get("ssl_assert_hostname", "True").lower() == "true"
             )
             ssl_show_warn = (
-                vector_db_key_decoded_dict.get("ssl_show_warn", "True").lower()
-                == "true"
+                vector_db_key_decoded_dict.get("ssl_show_warn", "True").lower() == "true"
             )
             index_prefix = vector_db_key_decoded_dict.get("index_prefix", "")
 
@@ -237,9 +231,7 @@ class OpenSearchAdapter(VectorDBInterface):
             ],
         )
 
-    async def create_data_points(
-        self, collection_name: str, data_points: List[DataPoint]
-    ):
+    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
         """
         Create or update data points in the specified collection.
 
@@ -251,9 +243,7 @@ class OpenSearchAdapter(VectorDBInterface):
         index = self._get_index_name(collection_name)
         if not await self.has_collection(collection_name):
             await self.create_collection(collection_name, type(data_points[0]))
-        vectors = await self.embed_data(
-            [DataPoint.get_embeddable_data(dp) for dp in data_points]
-        )
+        vectors = await self.embed_data([DataPoint.get_embeddable_data(dp) for dp in data_points])
         actions = []
         for i, dp in enumerate(data_points):
             doc = {"id": str(dp.id), "payload": dp.model_dump(), "vector": vectors[i]}
@@ -282,9 +272,7 @@ class OpenSearchAdapter(VectorDBInterface):
                 res = await self.client.get(index=index, id=id_)
                 source = res["_source"]
                 docs.append(
-                    ScoredResult(
-                        id=parse_id(source["id"]), payload=source["payload"], score=0
-                    )
+                    ScoredResult(id=parse_id(source["id"]), payload=source["payload"], score=0)
                 )
             except NotFoundError:
                 continue

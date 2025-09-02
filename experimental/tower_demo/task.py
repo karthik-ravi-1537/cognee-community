@@ -133,9 +133,7 @@ class HackerNewsProcessor:
 
             processed_count += 1
             if processed_count % 10 == 0:
-                print(
-                    f"   Processed {processed_count} stories, found {new_stories_count} new ones"
-                )
+                print(f"   Processed {processed_count} stories, found {new_stories_count} new ones")
 
             time.sleep(0.1)  # Rate limiting
 
@@ -157,17 +155,15 @@ class HackerNewsProcessor:
 
         try:
             # Create or get Iceberg table
-            table_name = "hn_stories_v1"  # This will be used in the next step to read from the table
-            namespace = (
-                "hn_v1"  # This will be used in the next step to read from the table
+            table_name = (
+                "hn_stories_v1"  # This will be used in the next step to read from the table
             )
+            namespace = "hn_v1"  # This will be used in the next step to read from the table
             print(
                 f"🔧 Debug: Creating table reference for '{table_name}' in namespace '{namespace}'"
             )
             table_ref = tower.tables(table_name, namespace=namespace)
-            print(
-                f"🔧 Debug: Table reference created, now calling create_if_not_exists..."
-            )
+            print(f"🔧 Debug: Table reference created, now calling create_if_not_exists...")
             table = table_ref.create_if_not_exists(HACKERNEWS_SCHEMA)
             print(f"🔧 Debug: Table created/loaded successfully")
 
@@ -211,12 +207,8 @@ class HackerNewsProcessor:
             # Debug: Check the first record structure
             if records:
                 print(f"🔧 Debug: First record keys: {sorted(records[0].keys())}")
-                print(
-                    f"🔧 Debug: Sample kids value: {records[0].get('kids', 'NOT_FOUND')}"
-                )
-                print(
-                    f"🔧 Debug: Sample parts value: {records[0].get('parts', 'NOT_FOUND')}"
-                )
+                print(f"🔧 Debug: Sample kids value: {records[0].get('kids', 'NOT_FOUND')}")
+                print(f"🔧 Debug: Sample parts value: {records[0].get('parts', 'NOT_FOUND')}")
 
             # Create PyArrow Table and write
             # Use from_pylist for list of dictionaries with explicit schema
@@ -484,9 +476,7 @@ async def main():
         # Setup LLM configuration
         print("\n🔑 Setting up LLM configuration...")
         if not setup_llm_config():
-            print(
-                "❌ LLM configuration failed. Please set up API keys in Tower secrets."
-            )
+            print("❌ LLM configuration failed. Please set up API keys in Tower secrets.")
             return 1
 
         # Initialize processors
@@ -523,9 +513,7 @@ async def main():
 
         # Step 4: Cognify
         print("\n🧠 Step 4: Processing with Cognee...")
-        dataset_name = await cognee_processor.process_stories_with_cognee(
-            iceberg_stories
-        )
+        dataset_name = await cognee_processor.process_stories_with_cognee(iceberg_stories)
         if not dataset_name:
             print("❌ Cognee processing failed")
             return 1

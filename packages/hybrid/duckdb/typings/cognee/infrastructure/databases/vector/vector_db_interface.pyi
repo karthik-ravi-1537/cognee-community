@@ -11,9 +11,7 @@ class VectorDBInterface(Protocol):
     async def create_data_points(
         self, collection_name: str, data_points: List[DataPoint]
     ) -> None: ...
-    async def create_vector_index(
-        self, index_name: str, index_property_name: str
-    ) -> None: ...
+    async def create_vector_index(self, index_name: str, index_property_name: str) -> None: ...
 
     # TODO: Looks like we forgot update this method in the interface in root repo. Reflect this in the interface in root repo
     async def index_data_points(

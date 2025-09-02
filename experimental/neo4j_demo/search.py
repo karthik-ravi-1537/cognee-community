@@ -25,9 +25,7 @@ async def main():
         node_type=NodeSet,
         node_name=["Aura_NodeSet"],
     )
-    print(
-        "\nGraph completion answer with NodeSet filtering: (We expect to see no subtopics found)"
-    )
+    print("\nGraph completion answer with NodeSet filtering: (We expect to see no subtopics found)")
     for result in graph_completion_node_set_answer:
         print(f"- {result}")
 

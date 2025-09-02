@@ -64,9 +64,7 @@ def scrape_markdown_with_firecrawl(url: str) -> str:
                 time.sleep(backoff_seconds)
                 continue
             else:
-                raise RuntimeError(
-                    f"Exceeded max retries (429). Last response: {resp.text}"
-                )
+                raise RuntimeError(f"Exceeded max retries (429). Last response: {resp.text}")
 
         else:
             raise RuntimeError(f"Firecrawl error {resp.status_code}: {resp.text}")
@@ -99,9 +97,7 @@ def crawl_qdrant_docs(start_url: str, max_depth: int, output_file: str):
         try:
             html_resp = requests.get(current_url, timeout=15)
             if html_resp.status_code != 200:
-                logger.warning(
-                    f"Skipping {current_url}, status={html_resp.status_code}"
-                )
+                logger.warning(f"Skipping {current_url}, status={html_resp.status_code}")
                 continue
         except Exception as e:
             logger.warning(f"Failed to GET {current_url} - {e}")

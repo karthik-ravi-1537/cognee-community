@@ -52,13 +52,9 @@ def ingest_files(data: List[Any]):
 
         ctype = CompanyType()
         for c in companies:
-            comp = company_dp[c["name"]] = Company(
-                name=c["name"], departments=[], is_type=ctype
-            )
+            comp = company_dp[c["name"]] = Company(name=c["name"], departments=[], is_type=ctype)
             for d in c["departments"]:
-                comp.departments.append(
-                    dept_dp.setdefault(d, Department(name=d, employees=[]))
-                )
+                comp.departments.append(dept_dp.setdefault(d, Department(name=d, employees=[])))
     return company_dp.values()
 
 

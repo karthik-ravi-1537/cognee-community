@@ -62,9 +62,7 @@ def scrape_markdown_with_firecrawl(url: str) -> str:
                 time.sleep(backoff_seconds)
                 continue
             else:
-                raise RuntimeError(
-                    f"Exceeded max retries (429). Last response: {resp.text}"
-                )
+                raise RuntimeError(f"Exceeded max retries (429). Last response: {resp.text}")
         elif resp.status_code == 502:
             # 502 => Bad Gateway error
             if attempt < max_retries:
@@ -74,9 +72,7 @@ def scrape_markdown_with_firecrawl(url: str) -> str:
                 time.sleep(backoff_seconds)
                 continue
             else:
-                raise RuntimeError(
-                    f"Exceeded max retries (502). Last response: {resp.text}"
-                )
+                raise RuntimeError(f"Exceeded max retries (502). Last response: {resp.text}")
 
         else:
             raise RuntimeError(f"Firecrawl error {resp.status_code}: {resp.text}")

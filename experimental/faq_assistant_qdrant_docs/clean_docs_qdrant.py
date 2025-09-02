@@ -2,9 +2,7 @@ import re
 
 
 def clean_doc(input_file, output_file):
-    privacy_section_pattern = re.compile(
-        r"## Privacy Preference Center.*?(?=-----|\Z)", re.DOTALL
-    )
+    privacy_section_pattern = re.compile(r"## Privacy Preference Center.*?(?=-----|\Z)", re.DOTALL)
     cookie_list_pattern = re.compile(r"### Cookie List.*?(?=-----|\Z)", re.DOTALL)
 
     with open(input_file, "r", encoding="utf-8") as f:
