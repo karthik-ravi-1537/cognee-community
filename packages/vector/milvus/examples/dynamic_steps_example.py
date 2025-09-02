@@ -163,11 +163,13 @@ Negotiation and Relationship Building
 
 async def main(enable_steps: dict[str, bool]) -> None:
     # Please provide your Milvus instance url or local path
-    cognee.config.set_vector_db_config({
-        "vector_db_provider": "milvus",
-        "vector_db_url": os.getenv("MILVUS_URL", "http://localhost:19530"),
-        "vector_db_key": os.getenv("MILVUS_KEY", ""),
-    })
+    cognee.config.set_vector_db_config(
+        {
+            "vector_db_provider": "milvus",
+            "vector_db_url": os.getenv("MILVUS_URL", "http://localhost:19530"),
+            "vector_db_key": os.getenv("MILVUS_KEY", ""),
+        }
+    )
 
     # Step 1: Reset data and system state
     if enable_steps.get("prune_data"):
@@ -193,7 +195,8 @@ async def main(enable_steps: dict[str, bool]) -> None:
     # Step 4: Query insights
     if enable_steps.get("retriever"):
         search_results = await cognee.search(
-            query_type=SearchType.GRAPH_COMPLETION, query_text="Who has experience in design tools?"
+            query_type=SearchType.GRAPH_COMPLETION,
+            query_text="Who has experience in design tools?",
         )
         print(search_results)
 

@@ -2,13 +2,17 @@ from typing import List, Optional
 from opensearchpy import AsyncOpenSearch, NotFoundError
 from cognee.infrastructure.engine import DataPoint
 from cognee.infrastructure.engine.utils import parse_id
+from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
 from cognee.infrastructure.databases.vector.vector_db_interface import VectorDBInterface
-from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import EmbeddingEngine
+from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
+    EmbeddingEngine,
+)
 from cognee.infrastructure.databases.vector.exceptions import CollectionNotFoundError
 import asyncio
 import base64
 import json
+
 
 class IndexSchema(DataPoint):
     """
@@ -18,8 +22,10 @@ class IndexSchema(DataPoint):
     data point that includes a text attribute. It also includes a metadata field that
     indicates which fields should be indexed.
     """
+
     text: str
     metadata: dict = {"index_fields": ["text"]}
+
 
 class OpenSearchAdapter(VectorDBInterface):
     """
@@ -36,7 +42,7 @@ class OpenSearchAdapter(VectorDBInterface):
         api_key: Optional[str] = None,
         embedding_engine: EmbeddingEngine = None,
         endpoint: Optional[str] = None,
-        **kwargs: Optional[dict] # Accept additional keyword arguments
+        **kwargs: Optional[dict],  # Accept additional keyword arguments
     ):
         """
         Initialize the OpenSearchAdapter.
@@ -50,13 +56,13 @@ class OpenSearchAdapter(VectorDBInterface):
             - **kwargs: Additional keyword arguments for configuration.
         """
         http_auth = None
-        index_prefix=""
+        index_prefix = ""
         use_ssl = False
         verify_certs = True
         ssl_assert_hostname = True
         ssl_show_warn = True
 
-        #Decoding the parameters_key if provided
+        # Decoding the parameters_key if provided
         if api_key:
             vector_db_key_decoded = base64.b64decode(api_key).decode("utf-8")
             vector_db_key_decoded_dict = json.loads(vector_db_key_decoded)
@@ -64,19 +70,29 @@ class OpenSearchAdapter(VectorDBInterface):
             password = vector_db_key_decoded_dict.get("password", None)
             if username and password:
                 http_auth = (username, password)
-            use_ssl = vector_db_key_decoded_dict.get("use_ssl", "False").lower() == "true"
-            verify_certs = vector_db_key_decoded_dict.get("verify_certs", "True").lower() == "true"
-            ssl_assert_hostname = vector_db_key_decoded_dict.get("ssl_assert_hostname", "True").lower() == "true"
-            ssl_show_warn = vector_db_key_decoded_dict.get("ssl_show_warn", "True").lower() == "true"
+            use_ssl = (
+                vector_db_key_decoded_dict.get("use_ssl", "False").lower() == "true"
+            )
+            verify_certs = (
+                vector_db_key_decoded_dict.get("verify_certs", "True").lower() == "true"
+            )
+            ssl_assert_hostname = (
+                vector_db_key_decoded_dict.get("ssl_assert_hostname", "True").lower()
+                == "true"
+            )
+            ssl_show_warn = (
+                vector_db_key_decoded_dict.get("ssl_show_warn", "True").lower()
+                == "true"
+            )
             index_prefix = vector_db_key_decoded_dict.get("index_prefix", "")
-        
+
         # Handle both 'url' and 'endpoint' parameters
         # Also handle the 'utl' typo that appears to be in cognee
-        final_endpoint = endpoint or url or kwargs.get('utl')
+        final_endpoint = endpoint or url or kwargs.get("utl")
 
         self.final_endpoint = final_endpoint
         self.embedding_engine = embedding_engine
-        self.index_prefix =index_prefix
+        self.index_prefix = index_prefix
         self.VECTOR_DB_LOCK = asyncio.Lock()
         self.client = AsyncOpenSearch(
             hosts=[self.final_endpoint],
@@ -86,8 +102,23 @@ class OpenSearchAdapter(VectorDBInterface):
                 "verify_certs": verify_certs,
                 "ssl_assert_hostname": ssl_assert_hostname,
                 "ssl_show_warn": ssl_show_warn,
-            }
+            },
         )
+
+        self._lock = asyncio.Lock()
+        self._users = 0
+
+    async def _acquire(self):
+        async with self._lock:
+            self._users += 1  # ← increment
+            return self.client
+
+    async def _release(self):
+        async with self._lock:
+            self._users -= 1  # ← decrement
+            if self._users == 0 and self.client:
+                await self.client.close()
+                self.client = None
 
     def _get_index_name(self, collection_name: str) -> str:
         """
@@ -101,7 +132,10 @@ class OpenSearchAdapter(VectorDBInterface):
         --------
             - str: The full index name.
         """
-        return f"{self.index_prefix}_{collection_name}".lower()
+        if self.index_prefix:
+            return f"{self.index_prefix}_{collection_name}".lower()
+        else:
+            return f"{collection_name}".lower()
 
     async def embed_data(self, data: List[str]) -> List[List[float]]:
         """
@@ -150,11 +184,7 @@ class OpenSearchAdapter(VectorDBInterface):
             if not await self.has_collection(collection_name):
                 vector_size = self.embedding_engine.get_vector_size()
                 body = {
-                    "settings": {
-                        "index": {
-                            "knn": True
-                        }
-                    },
+                    "settings": {"index": {"knn": True}},
                     "mappings": {
                         "properties": {
                             "id": {"type": "keyword"},
@@ -165,11 +195,11 @@ class OpenSearchAdapter(VectorDBInterface):
                                 "method": {
                                     "name": "hnsw",
                                     "space_type": "cosinesimil",
-                                    "engine": "nmslib"
-                                }
-                            }
+                                    "engine": "faiss",
+                                },
+                            },
                         }
-                    }
+                    },
                 }
                 await self.client.indices.create(index=index, body=body)
 
@@ -183,7 +213,7 @@ class OpenSearchAdapter(VectorDBInterface):
             - index_property_name (str): The property name to index.
         """
         await self.create_collection(f"{index_name}_{index_property_name}")
-    
+
     async def index_data_points(
         self, index_name: str, index_property_name: str, data_points: list[DataPoint]
     ):
@@ -207,7 +237,9 @@ class OpenSearchAdapter(VectorDBInterface):
             ],
         )
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(
+        self, collection_name: str, data_points: List[DataPoint]
+    ):
         """
         Create or update data points in the specified collection.
 
@@ -219,14 +251,12 @@ class OpenSearchAdapter(VectorDBInterface):
         index = self._get_index_name(collection_name)
         if not await self.has_collection(collection_name):
             await self.create_collection(collection_name, type(data_points[0]))
-        vectors = await self.embed_data([DataPoint.get_embeddable_data(dp) for dp in data_points])
+        vectors = await self.embed_data(
+            [DataPoint.get_embeddable_data(dp) for dp in data_points]
+        )
         actions = []
         for i, dp in enumerate(data_points):
-            doc = {
-                "id": str(dp.id),
-                "payload": dp.model_dump(),
-                "vector": vectors[i]
-            }
+            doc = {"id": str(dp.id), "payload": dp.model_dump(), "vector": vectors[i]}
             actions.append({"index": {"_index": index, "_id": str(dp.id)}})
             actions.append(doc)
         # Bulk insert
@@ -253,9 +283,7 @@ class OpenSearchAdapter(VectorDBInterface):
                 source = res["_source"]
                 docs.append(
                     ScoredResult(
-                        id=parse_id(source["id"]),
-                        payload=source["payload"],
-                        score=0
+                        id=parse_id(source["id"]), payload=source["payload"], score=0
                     )
                 )
             except NotFoundError:
@@ -285,27 +313,23 @@ class OpenSearchAdapter(VectorDBInterface):
         --------
             - List[ScoredResult]: List of search results as ScoredResult objects.
         """
-        # Ensure limit is within OpenSeachs's valid range (1-10000)
-        if limit > 0:
+        # Ensure limit is within OpenSearch's valid range (1-10000)
+        if limit and limit > 0:
             limit = min(limit, 10000)
         else:
             limit = 10000
-        
+
         if query_text is None and query_vector is None:
-            raise ValueError("One of query_text or query_vector must be provided!")
+            raise MissingQueryParameterError()
         if query_vector is None:
             query_vector = (await self.embed_data([query_text]))[0]
+
+        await self._acquire()
+
         index = self._get_index_name(collection_name)
         query = {
             "size": limit,
-            "query": {
-                "knn": {
-                    "vector": {
-                        "vector": query_vector,
-                        "k": limit
-                    }
-                }
-            }
+            "query": {"knn": {"vector": {"vector": query_vector, "k": limit}}},
         }
         try:
             res = await self.client.search(index=index, body=query)
@@ -318,12 +342,14 @@ class OpenSearchAdapter(VectorDBInterface):
                     ScoredResult(
                         id=parse_id(source["id"]),
                         payload=source["payload"],
-                        score=score
+                        score=score,
                     )
                 )
             return results
         except NotFoundError:
             raise CollectionNotFoundError(f"Collection '{collection_name}' not found!")
+        finally:
+            await self._release()
 
     async def batch_search(
         self,
@@ -352,7 +378,7 @@ class OpenSearchAdapter(VectorDBInterface):
                 collection_name=collection_name,
                 query_vector=vector,
                 limit=limit,
-                with_vector=with_vectors
+                with_vector=with_vectors,
             )
             for vector in vectors
         ]
@@ -378,6 +404,6 @@ class OpenSearchAdapter(VectorDBInterface):
         Remove all indices with the configured prefix from OpenSearch.
         """
         # Remove all indices with the prefix
-        indices = await self.client.indices.get(index=f"{self.index_prefix}_*")
+        indices = await self.client.indices.get(index=f"{self.index_prefix}*")
         for index in indices:
             await self.client.indices.delete(index=index)

@@ -3,7 +3,9 @@ import os
 import json
 import asyncio
 
-from cognee.infrastructure.databases.exceptions.exceptions import NodesetFilterNotSupportedError
+from cognee.infrastructure.databases.exceptions.exceptions import (
+    NodesetFilterNotSupportedError,
+)
 from cognee.shared.logging_utils import get_logger
 from typing import Dict, Any, List, Union, Type, Tuple
 from uuid import UUID
@@ -33,7 +35,9 @@ class NetworkXAdapter(GraphDBInterface):
     graph = None  # Class variable to store the singleton instance
 
     #:TODO: Since networkx is not a real database these params dont make sense but they are needed for now because of cognee third party graph db interface handling. We have to find a better solution
-    def __new__(cls, graph_database_url, graph_database_username, graph_database_password):
+    def __new__(
+        cls, graph_database_url, graph_database_username, graph_database_password
+    ):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance.graph_database_url = graph_database_url
@@ -41,14 +45,16 @@ class NetworkXAdapter(GraphDBInterface):
             cls._instance.graph_database_password = graph_database_password
         return cls._instance
 
-    def __init__(self, graph_database_url=None,
-                 graph_database_username=None,
-                 graph_database_password=None,):
+    def __init__(
+        self,
+        graph_database_url=None,
+        graph_database_username=None,
+        graph_database_password=None,
+    ):
         self.filename = "cognee_graph.pkl"
         self.graph_database_url = graph_database_url
         self.graph_database_username = graph_database_username
         self.graph_database_password = graph_database_password
-
 
     async def get_graph_data(self):
         """
@@ -60,7 +66,10 @@ class NetworkXAdapter(GraphDBInterface):
             A tuple containing a list of node data and a list of edge data.
         """
         await self.load_graph_from_file()
-        return (list(self.graph.nodes(data=True)), list(self.graph.edges(data=True, keys=True)))
+        return (
+            list(self.graph.nodes(data=True)),
+            list(self.graph.edges(data=True, keys=True)),
+        )
 
     async def query(self, query: str, params: dict):
         """
@@ -230,7 +239,9 @@ class NetworkXAdapter(GraphDBInterface):
                 to_node = str(edge[1]) if isinstance(edge[1], UUID) else edge[1]
                 relationship_name = edge[2]
 
-                if not all(isinstance(x, str) for x in [from_node, to_node, relationship_name]):
+                if not all(
+                    isinstance(x, str) for x in [from_node, to_node, relationship_name]
+                ):
                     raise ValueError(
                         f"First three elements of edge must be strings or UUIDs: {edge}"
                     )
@@ -289,7 +300,9 @@ class NetworkXAdapter(GraphDBInterface):
             # First remove all edges connected to the node
             for edge in list(self.graph.edges(node_id, data=True)):
                 source, target, data = edge
-                self.graph.remove_edge(source, target, key=data.get("relationship_name"))
+                self.graph.remove_edge(
+                    source, target, key=data.get("relationship_name")
+                )
 
             # Then remove the node itself
             self.graph.remove_node(node_id)
@@ -364,7 +377,11 @@ class NetworkXAdapter(GraphDBInterface):
 
             - List[dict]: A list of data for each node identified that exists in the graph.
         """
-        return [self.graph.nodes[node_id] for node_id in node_ids if self.graph.has_node(node_id)]
+        return [
+            self.graph.nodes[node_id]
+            for node_id in node_ids
+            if self.graph.has_node(node_id)
+        ]
 
     async def get_predecessors(self, node_id: UUID, edge_label: str = None) -> list:
         """
@@ -652,13 +669,17 @@ class NetworkXAdapter(GraphDBInterface):
                                 edge["updated_at"], "%Y-%m-%dT%H:%M:%S.%f%z"
                             )
 
-                    self.graph = nx.readwrite.json_graph.node_link_graph(graph_data, edges="links")
+                    self.graph = nx.readwrite.json_graph.node_link_graph(
+                        graph_data, edges="links"
+                    )
 
                     for node_id, node_data in self.graph.nodes(data=True):
                         node_data["id"] = node_id
             else:
                 # Log that the file does not exist and an empty graph is initialized
-                logger.warning("File %s not found. Initializing an empty graph.", file_path)
+                logger.warning(
+                    "File %s not found. Initializing an empty graph.", file_path
+                )
                 await self.create_empty_graph(file_path)
 
         except Exception:
@@ -677,9 +698,7 @@ class NetworkXAdapter(GraphDBInterface):
               default graph file. (default None)
         """
         if file_path is None:
-            file_path = (
-                self.filename
-            )  # Assuming self.filename is defined elsewhere and holds the default graph file path
+            file_path = self.filename  # Assuming self.filename is defined elsewhere and holds the default graph file path
         try:
             if os.path.exists(file_path):
                 await aiofiles_os.remove(file_path)
@@ -739,9 +758,13 @@ class NetworkXAdapter(GraphDBInterface):
             (source, target, data.get("relationship_type", "UNKNOWN"), data)
             for source, target, data in self.graph.edges(data=True)
             if (
-                all(self.graph.nodes[source].get(attr) in values for attr, values in where_clauses)
+                all(
+                    self.graph.nodes[source].get(attr) in values
+                    for attr, values in where_clauses
+                )
                 and all(
-                    self.graph.nodes[target].get(attr) in values for attr, values in where_clauses
+                    self.graph.nodes[target].get(attr) in values
+                    for attr, values in where_clauses
                 )
             )
         ]
@@ -773,7 +796,9 @@ class NetworkXAdapter(GraphDBInterface):
             num_nodes = graph.number_of_nodes()
             num_edges = graph.number_of_edges()
             num_possible_edges = num_nodes * (num_nodes - 1)
-            edge_density = num_edges / num_possible_edges if num_possible_edges > 0 else 0
+            edge_density = (
+                num_edges / num_possible_edges if num_possible_edges > 0 else 0
+            )
             return edge_density
 
         def _get_diameter(graph):
@@ -785,9 +810,13 @@ class NetworkXAdapter(GraphDBInterface):
 
         def _get_avg_shortest_path_length(graph):
             try:
-                return nx.average_shortest_path_length(nx.DiGraph(graph.to_undirected()))
+                return nx.average_shortest_path_length(
+                    nx.DiGraph(graph.to_undirected())
+                )
             except Exception as e:
-                logger.warning("Failed to calculate average shortest path length: %s", e)
+                logger.warning(
+                    "Failed to calculate average shortest path length: %s", e
+                )
                 return None
 
         def _get_avg_clustering(graph):
@@ -854,7 +883,10 @@ class NetworkXAdapter(GraphDBInterface):
                 attrs.get("type") in ["TextDocument", "PdfDocument"]
                 and attrs.get("name") == f"text_{content_hash}"
             ):
-                document = {"id": str(node_id), **attrs}  # Convert UUID to string for consistency
+                document = {
+                    "id": str(node_id),
+                    **attrs,
+                }  # Convert UUID to string for consistency
                 document_node_id = node_id  # Keep the original UUID
                 break
 
@@ -863,9 +895,13 @@ class NetworkXAdapter(GraphDBInterface):
 
         # Find chunks connected via is_part_of (chunks point TO document)
         chunks = []
-        for source, target, edge_data in self.graph.in_edges(document_node_id, data=True):
+        for source, target, edge_data in self.graph.in_edges(
+            document_node_id, data=True
+        ):
             if edge_data.get("relationship_name") == "is_part_of":
-                chunks.append({"id": source, **self.graph.nodes[source]})  # Keep as UUID object
+                chunks.append(
+                    {"id": source, **self.graph.nodes[source]}
+                )  # Keep as UUID object
 
         # Find entities connected to chunks (chunks point TO entities via contains)
         entities = []
@@ -901,17 +937,27 @@ class NetworkXAdapter(GraphDBInterface):
                 if edge_data.get("relationship_name") in ["is_a", "instance_of"]:
                     # Check if this type is only connected to entities we're deleting
                     type_node = self.graph.nodes[target]
-                    if type_node.get("type") == "EntityType" and target not in seen_types:
+                    if (
+                        type_node.get("type") == "EntityType"
+                        and target not in seen_types
+                    ):
                         is_orphaned = True
                         # Get all incoming edges to this type node
-                        for source, _, edge_data in self.graph.in_edges(target, data=True):
-                            if edge_data.get("relationship_name") in ["is_a", "instance_of"]:
+                        for source, _, edge_data in self.graph.in_edges(
+                            target, data=True
+                        ):
+                            if edge_data.get("relationship_name") in [
+                                "is_a",
+                                "instance_of",
+                            ]:
                                 # Check if the source entity is not in our orphan_entities list
                                 if source not in [e["id"] for e in orphan_entities]:
                                     is_orphaned = False
                                     break
                         if is_orphaned:
-                            orphan_types.append({"id": target, **type_node})  # Keep as UUID object
+                            orphan_types.append(
+                                {"id": target, **type_node}
+                            )  # Keep as UUID object
                             seen_types.add(target)  # Mark as seen
 
         # Find nodes connected via made_from (chunks point TO summaries)
@@ -926,7 +972,12 @@ class NetworkXAdapter(GraphDBInterface):
 
         # Return UUIDs directly without string conversion
         return {
-            "document": [{"id": document["id"], **{k: v for k, v in document.items() if k != "id"}}]
+            "document": [
+                {
+                    "id": document["id"],
+                    **{k: v for k, v in document.items() if k != "id"},
+                }
+            ]
             if document
             else [],
             "chunks": [
@@ -942,7 +993,10 @@ class NetworkXAdapter(GraphDBInterface):
                 for node in made_from_nodes
             ],
             "orphan_types": [
-                {"id": type_node["id"], **{k: v for k, v in type_node.items() if k != "id"}}
+                {
+                    "id": type_node["id"],
+                    **{k: v for k, v in type_node.items() if k != "id"},
+                }
                 for type_node in orphan_types
             ],
         }
@@ -1008,7 +1062,9 @@ class NetworkXAdapter(GraphDBInterface):
             - List[dict]: A list of node data for each found node.
         """
         if node_ids is None:
-            return [{"id": node_id, **data} for node_id, data in self.graph.nodes(data=True)]
+            return [
+                {"id": node_id, **data} for node_id, data in self.graph.nodes(data=True)
+            ]
         return [
             {"id": node_id, **self.graph.nodes[node_id]}
             for node_id in node_ids

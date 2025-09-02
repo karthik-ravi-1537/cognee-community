@@ -12,8 +12,17 @@ This adapter provides integration between Cognee and Azure AI Search (formerly A
 
 ## Installation
 
+If published, the package can be simply installed via pip:
+
 ```bash
-pip install -r requirements.txt
+pip install cognee-community-vector-adapter-azure
+```
+
+In case it is not published yet, you can use poetry to locally build the adapter package:
+
+```bash
+pip install poetry
+poetry install # run this command in the directory containing the pyproject.toml file
 ```
 
 ## Configuration

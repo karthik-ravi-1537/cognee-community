@@ -11,6 +11,7 @@ sys.path.append(packages_module_path)
 # NOTE: Importing the register module we let cognee know it can use the Networkx adapter
 from cognee_community_graph_adapter_networkx import register
 
+
 async def main():
     from cognee import config, prune, add, cognify, search, SearchType
 
@@ -18,18 +19,24 @@ async def main():
     config.system_root_directory(path.join(system_path, ".cognee-system"))
     config.data_root_directory(path.join(system_path, ".cognee-data"))
 
-    config.set_relational_db_config({
-        "db_provider": "sqlite",
-    })
-    config.set_vector_db_config({
-        "vector_db_provider": "lancedb",
-    })
-    config.set_graph_db_config({
-        "graph_database_provider": "networkx",
-    })
+    config.set_relational_db_config(
+        {
+            "db_provider": "sqlite",
+        }
+    )
+    config.set_vector_db_config(
+        {
+            "vector_db_provider": "lancedb",
+        }
+    )
+    config.set_graph_db_config(
+        {
+            "graph_database_provider": "networkx",
+        }
+    )
 
     await prune.prune_data()
-    await prune.prune_system()
+    await prune.prune_system(metadata=True)
 
     text = """
     Natural language processing (NLP) is an interdisciplinary
@@ -42,7 +49,9 @@ async def main():
 
     query_text = "Tell me about NLP"
 
-    search_results = await search(query_type=SearchType.GRAPH_COMPLETION, query_text=query_text)
+    search_results = await search(
+        query_type=SearchType.GRAPH_COMPLETION, query_text=query_text
+    )
 
     for result_text in search_results:
         print(result_text)

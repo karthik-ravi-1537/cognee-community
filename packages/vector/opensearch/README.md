@@ -12,8 +12,29 @@ This adapter provides integration between Cognee and [OpenSearch](https://opense
 
 ## Installation
 
+If published, the package can be simply installed via pip:
+
+```bash
+pip install cognee-community-vector-adapter-opensearch
+```
+
+In case it is not published yet, you can use pip or poetry to locally build the adapter package:
+
 ```bash
 pip install .
+# OR
+pip install poetry
+poetry install # run this command in the directory containing the pyproject.toml file
+```
+
+## Connection Setup
+
+For a quick local setup, you can run a docker container that qdrant provides (https://qdrant.tech/documentation/quickstart/). 
+After this, you will be able to connect to the Qdrant DB through the appropriate ports. The command for running the docker 
+container looks something like the following:
+
+```
+docker pull opensearchproject/opensearch:latest && docker run -it -p 9200:9200 -p 9600:9600 -e "discovery.type=single-node" -e "DISABLE_SECURITY_PLUGIN=true" opensearchproject/opensearch:latest
 ```
 
 ## Configuration

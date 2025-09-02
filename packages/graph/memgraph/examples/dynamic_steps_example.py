@@ -168,20 +168,22 @@ Negotiation and Relationship Building
 async def main(enable_steps):
     # Configure cognee to use Memgraph
     cognee.config.set_graph_database_provider("memgraph")
-    
+
     # Set up your Memgraph connection
     # Make sure you have Memgraph running on localhost:7687
-    cognee.config.set_graph_db_config({
-        "graph_database_url": "bolt://localhost:7687",
-        "graph_database_username": "memgraph",
-        "graph_database_password": "memgraph"
-    })
-    
+    cognee.config.set_graph_db_config(
+        {
+            "graph_database_url": "bolt://localhost:7687",
+            "graph_database_username": "memgraph",
+            "graph_database_password": "memgraph",
+        }
+    )
+
     # Optional: Set custom data and system directories
     system_path = pathlib.Path(__file__).parent
     cognee.config.system_root_directory(os.path.join(system_path, ".cognee_system"))
     cognee.config.data_root_directory(os.path.join(system_path, ".data_storage"))
-    
+
     # Step 1: Reset data and system state
     if enable_steps.get("prune_data"):
         await cognee.prune.prune_data()
@@ -207,17 +209,17 @@ async def main(enable_steps):
     if enable_steps.get("retriever"):
         print("Searching for candidates with design experience...")
         search_results = await cognee.search(
-            query_type=SearchType.GRAPH_COMPLETION, 
-            query_text="Who has experience in design tools?"
+            query_type=SearchType.GRAPH_COMPLETION,
+            query_text="Who has experience in design tools?",
         )
         print(f"Found {len(search_results)} results:")
         for i, result in enumerate(search_results, 1):
             print(f"{i}. {result}")
-            
+
         print("\nSearching with Chain of Thought reasoning...")
         cot_results = await cognee.search(
             query_type=SearchType.GRAPH_COMPLETION_COT,
-            query_text="Which data scientists have machine learning experience and what specific skills do they have?"
+            query_text="Which data scientists have machine learning experience and what specific skills do they have?",
         )
         print(f"Found {len(cot_results)} Chain of Thought results:")
         for i, result in enumerate(cot_results, 1):

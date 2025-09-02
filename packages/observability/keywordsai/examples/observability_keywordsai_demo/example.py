@@ -11,20 +11,25 @@ from cognee.pipelines import run_tasks, Task
 from cognee.tasks.storage import add_data_points as _add_data_points
 
 from cognee.modules.observability.get_observe import get_observe
-observe = get_observe()                                   
+
+observe = get_observe()
+
 
 class Person(DataPoint):
     name: str
-    metadata: dict[str, Any] = {"index_fields": ["name"]}  
+    metadata: dict[str, Any] = {"index_fields": ["name"]}
+
 
 class Department(DataPoint):
     name: str
     employees: list[Person]
     metadata: dict[str, Any] = {"index_fields": ["name"]}
 
+
 class CompanyType(DataPoint):
     name: str = "Company"
     metadata: dict[str, Any] = {"index_fields": ["name"]}
+
 
 class Company(DataPoint):
     name: str
@@ -32,8 +37,9 @@ class Company(DataPoint):
     is_type: CompanyType
     metadata: dict[str, Any] = {"index_fields": ["name"]}
 
+
 # ---------- Task: build DataPoints ---------- #
-@observe                    # task span
+@observe  # task span
 def ingest_files(data: List[Any]):
     people_dp, dept_dp, company_dp = {}, {}, {}
     for item in data:
@@ -55,13 +61,16 @@ def ingest_files(data: List[Any]):
                 )
     return company_dp.values()
 
+
 # Wrap to trace
 add_data_points = observe(_add_data_points)
 
+
 # ---------- Workflow ---------- #
-@observe(workflow=True)     # workflow span
+@observe(workflow=True)  # workflow span
 async def main():
-    await prune.prune_data(); await prune.prune_system(metadata=True)
+    await prune.prune_data()
+    await prune.prune_system(metadata=True)
     await setup()
 
     user = await get_default_user()
@@ -69,13 +78,13 @@ async def main():
 
     base = os.path.dirname(__file__)
     companies = json.load(open(os.path.join(base, "companies.json")))
-    people    = json.load(open(os.path.join(base, "people.json")))
+    people = json.load(open(os.path.join(base, "people.json")))
     data = [{"companies": companies, "people": people}]
 
     pipeline = run_tasks(
         [Task(ingest_files), Task(add_data_points)],
         dataset_id=ds[0].id,
-        data=data,             
+        data=data,
     )
     async for s in pipeline:
         print(s)
@@ -83,6 +92,7 @@ async def main():
     html_out = os.path.join(base, ".artifacts/graph_visualization.html")
     await visualize_graph(html_out)
     return html_out
+
 
 if __name__ == "__main__":
     asyncio.run(main())

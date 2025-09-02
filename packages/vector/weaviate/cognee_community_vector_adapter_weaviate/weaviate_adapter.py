@@ -4,12 +4,13 @@ from typing import List, Optional
 from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from cognee.shared.logging_utils import get_logger
-from cognee.exceptions import InvalidValueError
 from cognee.infrastructure.engine import DataPoint
 from cognee.infrastructure.engine.utils import parse_id
+from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector.exceptions import CollectionNotFoundError
-
-from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import EmbeddingEngine
+from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
+    EmbeddingEngine,
+)
 from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
 from cognee.infrastructure.databases.vector.vector_db_interface import VectorDBInterface
 
@@ -84,7 +85,9 @@ class WeaviateAdapter(VectorDBInterface):
         self.client = weaviate.use_async_with_weaviate_cloud(
             cluster_url=url,
             auth_credentials=weaviate.auth.AuthApiKey(api_key),
-            additional_config=wvc.init.AdditionalConfig(timeout=wvc.init.Timeout(init=30)),
+            additional_config=wvc.init.AdditionalConfig(
+                timeout=wvc.init.Timeout(init=30)
+            ),
         )
 
     async def get_client(self):
@@ -137,8 +140,7 @@ class WeaviateAdapter(VectorDBInterface):
 
             - bool: True if the collection exists, otherwise False.
         """
-        client = await self.get_client()
-        return await client.collections.exists(collection_name)
+        return await self.client.collections.exists(collection_name)
 
     @retry(
         retry=retry_if_exception(is_retryable_request),
@@ -170,19 +172,23 @@ class WeaviateAdapter(VectorDBInterface):
         """
         import weaviate.classes.config as wvcc
 
+        client = await self.get_client()
         async with self.VECTOR_DB_LOCK:
             if not await self.has_collection(collection_name):
-                client = await self.get_client()
                 return await client.collections.create(
                     name=collection_name,
                     properties=[
                         wvcc.Property(
-                            name="text", data_type=wvcc.DataType.TEXT, skip_vectorization=True
+                            name="text",
+                            data_type=wvcc.DataType.TEXT,
+                            skip_vectorization=True,
                         )
                     ],
                 )
             else:
-                return await self.get_collection(collection_name)
+                result = await self.get_collection(collection_name)
+                await client.close()
+                return result
 
     async def get_collection(self, collection_name: str):
         """
@@ -203,15 +209,16 @@ class WeaviateAdapter(VectorDBInterface):
         if not await self.has_collection(collection_name):
             raise CollectionNotFoundError(f"Collection '{collection_name}' not found.")
 
-        client = await self.get_client()
-        return client.collections.get(collection_name)
+        return self.client.collections.get(collection_name)
 
     @retry(
         retry=retry_if_exception(is_retryable_request),
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=2, min=1, max=6),
     )
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(
+        self, collection_name: str, data_points: List[DataPoint]
+    ):
         """
         Create or update data points in the specified collection in the Weaviate database.
 
@@ -262,8 +269,11 @@ class WeaviateAdapter(VectorDBInterface):
 
             return DataObject(uuid=data_point.id, properties=properties, vector=vector)
 
-        data_points = [convert_to_weaviate_data_points(data_point) for data_point in data_points]
+        data_points = [
+            convert_to_weaviate_data_points(data_point) for data_point in data_points
+        ]
 
+        await self.get_client()
         collection = await self.get_collection(collection_name)
 
         try:
@@ -288,6 +298,8 @@ class WeaviateAdapter(VectorDBInterface):
         except Exception as error:
             logger.error("Error creating data points: %s", str(error))
             raise error
+        finally:
+            await self.client.close()
 
     async def create_vector_index(self, index_name: str, index_property_name: str):
         """
@@ -358,6 +370,7 @@ class WeaviateAdapter(VectorDBInterface):
         """
         from weaviate.classes.query import Filter
 
+        await self.get_client()
         collection = await self.get_collection(collection_name)
         data_points = await collection.query.fetch_objects(
             filters=Filter.by_id().contains_any(data_point_ids)
@@ -368,6 +381,7 @@ class WeaviateAdapter(VectorDBInterface):
             data_point.id = data_point.uuid
             del data_point.properties
 
+        await self.client.close()
         return data_points.objects
 
     async def search(
@@ -381,7 +395,7 @@ class WeaviateAdapter(VectorDBInterface):
         """
         Perform a search on a collection using either a text query or a vector query.
 
-        Return scored results based on the search criteria provided. Raise InvalidValueError if
+        Return scored results based on the search criteria provided. Raise MissingQueryParameterError if
         no query is provided.
 
         Parameters:
@@ -404,36 +418,53 @@ class WeaviateAdapter(VectorDBInterface):
         import weaviate.exceptions
 
         if query_text is None and query_vector is None:
-            raise InvalidValueError(message="One of query_text or query_vector must be provided!")
+            raise MissingQueryParameterError()
 
         if query_vector is None:
             query_vector = (await self.embed_data([query_text]))[0]
 
-        collection = await self.get_collection(collection_name)
-
-        try:
-            search_result = await collection.query.hybrid(
-                query=None,
-                vector=query_vector,
-                limit=limit if limit > 0 else None,
-                include_vector=with_vector,
-                return_metadata=wvc.query.MetadataQuery(score=True),
-            )
-
-            return [
-                ScoredResult(
-                    id=parse_id(str(result.uuid)),
-                    payload=result.properties,
-                    score=1 - float(result.metadata.score),
+        # TODO: Creation of new client for every search call. This is VERY ugly, needs discussion. (Andrej's comment)
+        async with weaviate.use_async_with_weaviate_cloud(
+            cluster_url=self.url,
+            auth_credentials=weaviate.auth.AuthApiKey(self.api_key),
+            additional_config=wvc.init.AdditionalConfig(
+                timeout=wvc.init.Timeout(init=30)
+            ),
+        ) as client:
+            if not await client.collections.exists(collection_name):
+                raise CollectionNotFoundError(
+                    f"Collection '{collection_name}' not found."
                 )
-                for result in search_result.objects
-            ]
-        except weaviate.exceptions.WeaviateInvalidInputError:
-            # Ignore if the collection doesn't exist
-            return []
+
+            collection = client.collections.get(collection_name)
+
+            try:
+                search_result = await collection.query.hybrid(
+                    query=None,
+                    vector=query_vector,
+                    limit=limit if limit > 0 else None,
+                    include_vector=with_vector,
+                    return_metadata=wvc.query.MetadataQuery(score=True),
+                )
+
+                return [
+                    ScoredResult(
+                        id=parse_id(str(result.uuid)),
+                        payload=result.properties,
+                        score=1 - float(result.metadata.score),
+                    )
+                    for result in search_result.objects
+                ]
+            except weaviate.exceptions.WeaviateInvalidInputError:
+                # Ignore if the collection doesn't exist
+                return []
 
     async def batch_search(
-        self, collection_name: str, query_texts: List[str], limit: int, with_vectors: bool = False
+        self,
+        collection_name: str,
+        query_texts: List[str],
+        limit: int,
+        with_vectors: bool = False,
     ):
         """
         Execute a batch search for multiple query texts in the specified collection.
@@ -473,11 +504,15 @@ class WeaviateAdapter(VectorDBInterface):
                 The results of the search operation on the specified collection.
             """
             return self.search(
-                collection_name, query_vector=query_vector, limit=limit, with_vector=with_vectors
+                collection_name,
+                query_vector=query_vector,
+                limit=limit,
+                with_vector=with_vectors,
             )
 
         return [
-            await query_search(query_vector) for query_vector in await self.embed_data(query_texts)
+            await query_search(query_vector)
+            for query_vector in await self.embed_data(query_texts)
         ]
 
     async def delete_data_points(self, collection_name: str, data_point_ids: list[str]):
@@ -501,11 +536,13 @@ class WeaviateAdapter(VectorDBInterface):
         """
         from weaviate.classes.query import Filter
 
+        await self.get_client()
         collection = await self.get_collection(collection_name)
         result = await collection.data.delete_many(
             filters=Filter.by_id().contains_any(data_point_ids)
         )
 
+        await self.client.close()
         return result
 
     async def prune(self):
@@ -515,4 +552,5 @@ class WeaviateAdapter(VectorDBInterface):
         This operation will remove all data and cannot be undone.
         """
         client = await self.get_client()
-        await client.collections.delete_all() 
+        await client.collections.delete_all()
+        await client.close()

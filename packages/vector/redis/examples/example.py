@@ -6,8 +6,10 @@ from os import path
 # Please provide an OpenAI API Key
 os.environ.setdefault("LLM_API_KEY", "your-api-key")
 
+
 async def main():
     from cognee import config, prune, add, cognify, search, SearchType
+
     # NOTE: Importing the register module we let cognee know it can use the Redis vector adapter
     from cognee_community_vector_adapter_redis import register
 
@@ -16,14 +18,16 @@ async def main():
     config.data_root_directory(path.join(system_path, ".cognee-data"))
 
     # Please provide your Redis instance url
-    config.set_vector_db_config({
-        "vector_db_provider": "redis",
-        "vector_db_url": os.getenv("VECTOR_DB_URL", "redis://localhost:6379"),
-        "vector_db_key": os.getenv("VECTOR_DB_KEY", "your-api-key"),
-    })
+    config.set_vector_db_config(
+        {
+            "vector_db_provider": "redis",
+            "vector_db_url": os.getenv("VECTOR_DB_URL", "redis://localhost:6379"),
+            "vector_db_key": os.getenv("VECTOR_DB_KEY", "your-api-key"),
+        }
+    )
 
     await prune.prune_data()
-    await prune.prune_system()
+    await prune.prune_system(metadata=True)
 
     await add("""
     Natural language processing (NLP) is an interdisciplinary
@@ -39,10 +43,13 @@ async def main():
 
     query_text = "Tell me about NLP"
 
-    search_results = await search(query_type=SearchType.GRAPH_COMPLETION, query_text=query_text)
+    search_results = await search(
+        query_type=SearchType.GRAPH_COMPLETION, query_text=query_text
+    )
 
     for result_text in search_results:
         print("\nSearch result: \n" + result_text)
-    
+
+
 if __name__ == "__main__":
     asyncio.run(main())
