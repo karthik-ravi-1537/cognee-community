@@ -35,8 +35,17 @@
 
 ## Installation
 
+If published, the package can be simply installed via pip:
+
 ```bash
 pip install cognee-community-vector-adapter-redis
+```
+
+In case it is not published yet, you can use poetry to locally build the adapter package:
+
+```bash
+pip install poetry
+poetry install # run this command in the directory containing the pyproject.toml file
 ```
 
 ## Prerequisites

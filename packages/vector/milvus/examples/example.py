@@ -6,8 +6,10 @@ from os import path
 # Please provide an OpenAI API Key
 os.environ.setdefault("LLM_API_KEY", "")
 
+
 async def main() -> None:
     from cognee import config, prune, add, cognify, search, SearchType
+
     # NOTE: Importing the register module we let cognee know it can use the Milvus vector adapter
     from cognee_community_vector_adapter_milvus import register
 
@@ -15,16 +17,17 @@ async def main() -> None:
     config.system_root_directory(path.join(system_path, ".cognee_system"))
     config.data_root_directory(path.join(system_path, ".cognee_data"))
 
-
     # Please provide your Milvus instance url or local path
-    config.set_vector_db_config({
-        "vector_db_provider": "milvus",
-        "vector_db_url": os.getenv("MILVUS_URL", "http://localhost:19530"),
-        "vector_db_key": os.getenv("MILVUS_KEY", ""),
-    })
+    config.set_vector_db_config(
+        {
+            "vector_db_provider": "milvus",
+            "vector_db_url": os.getenv("MILVUS_URL", "http://localhost:19530"),
+            "vector_db_key": os.getenv("MILVUS_KEY", ""),
+        }
+    )
 
     await prune.prune_data()
-    await prune.prune_system()
+    await prune.prune_system(metadata=True)
 
     await add("""
     Natural language processing (NLP) is an interdisciplinary
@@ -40,10 +43,13 @@ async def main() -> None:
 
     query_text = "Tell me about NLP"
 
-    search_results = await search(query_type=SearchType.GRAPH_COMPLETION, query_text=query_text)
+    search_results = await search(
+        query_type=SearchType.GRAPH_COMPLETION, query_text=query_text
+    )
 
     for result_text in search_results:
         print("\nSearch result: \n" + result_text)
-    
+
+
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

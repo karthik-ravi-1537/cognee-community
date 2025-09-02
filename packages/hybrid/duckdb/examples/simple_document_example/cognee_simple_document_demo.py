@@ -15,11 +15,13 @@ async def cognee_demo():
     from cognee_community_hybrid_adapter_duckdb import register
 
     # Please provide your Milvus instance url or local path
-    cognee.config.set_vector_db_config({
-        "vector_db_provider": "duckdb",
-        "vector_db_url": None,
-        # "vector_db_port": 6379,
-    })
+    cognee.config.set_vector_db_config(
+        {
+            "vector_db_provider": "duckdb",
+            "vector_db_url": None,
+            # "vector_db_port": 6379,
+        }
+    )
 
     await cognee.prune.prune_data()
     print("Data pruned.")
@@ -35,7 +37,9 @@ async def cognee_demo():
     await cognee.cognify()
 
     # Query Cognee for information from provided document
-    answer = await cognee.search("List me all the important characters in The Citadel of Vorrxundra")
+    answer = await cognee.search(
+        "List me all the important characters in The Citadel of Vorrxundra"
+    )
     print(answer)
 
     answer = await cognee.search("What is the main character's name?")

@@ -24,11 +24,7 @@ Milvus is an open-source vector database built to power AI applications. It prov
 
 2. Import and register the adapter in your code:
    ```python
-   import cognee
-   from community.adapters.vector.milvus import MilvusAdapter
-   
-   # Register the adapter
-   cognee.use_vector_adapter("milvus", MilvusAdapter)
+   from cognee_community_vector_adapter_milvus import register
    ```
 
 ## Configuration

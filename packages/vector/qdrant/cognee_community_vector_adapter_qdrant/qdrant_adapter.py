@@ -2,14 +2,16 @@ import asyncio
 from typing import Dict, List, Optional
 from qdrant_client import AsyncQdrantClient, models
 
-from cognee.exceptions import InvalidValueError
 from cognee.shared.logging_utils import get_logger
 
 from cognee.infrastructure.engine import DataPoint
 from cognee.infrastructure.engine.utils import parse_id
+from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector import VectorDBInterface
 from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
-from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import EmbeddingEngine
+from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
+    EmbeddingEngine,
+)
 from cognee.infrastructure.databases.vector.exceptions import CollectionNotFoundError
 
 logger = get_logger("QDrantAdapter")
@@ -19,7 +21,6 @@ class IndexSchema(DataPoint):
     text: str
 
     metadata: dict = {"index_fields": ["text"]}
-
 
 
 def create_hnsw_config(hnsw_config: Dict):
@@ -46,7 +47,9 @@ class QDrantAdapter(VectorDBInterface):
     api_key: str = None
     qdrant_path: str = None
 
-    def __init__(self, url, api_key, embedding_engine: EmbeddingEngine, qdrant_path=None):
+    def __init__(
+        self, url, api_key, embedding_engine: EmbeddingEngine, qdrant_path=None
+    ):
         self.embedding_engine = embedding_engine
 
         if qdrant_path is not None:
@@ -86,14 +89,17 @@ class QDrantAdapter(VectorDBInterface):
                     collection_name=collection_name,
                     vectors_config={
                         "text": models.VectorParams(
-                            size=self.embedding_engine.get_vector_size(), distance="Cosine"
+                            size=self.embedding_engine.get_vector_size(),
+                            distance="Cosine",
                         )
                     },
                 )
 
             await client.close()
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(
+        self, collection_name: str, data_points: List[DataPoint]
+    ):
         from qdrant_client.http.exceptions import UnexpectedResponse
 
         client = self.get_qdrant_client()
@@ -145,7 +151,9 @@ class QDrantAdapter(VectorDBInterface):
 
     async def retrieve(self, collection_name: str, data_point_ids: list[str]):
         client = self.get_qdrant_client()
-        results = await client.retrieve(collection_name, data_point_ids, with_payload=True)
+        results = await client.retrieve(
+            collection_name, data_point_ids, with_payload=True
+        )
         await client.close()
         return results
 
@@ -160,7 +168,7 @@ class QDrantAdapter(VectorDBInterface):
         from qdrant_client.http.exceptions import UnexpectedResponse
 
         if query_text is None and query_vector is None:
-            raise InvalidValueError(message="One of query_text or query_vector must be provided!")
+            raise MissingQueryParameterError()
 
         if not await self.has_collection(collection_name):
             return []
@@ -172,6 +180,9 @@ class QDrantAdapter(VectorDBInterface):
             client = self.get_qdrant_client()
             if limit == 0:
                 collection_size = await client.count(collection_name=collection_name)
+                limit = collection_size.count
+            if limit == 0:
+                return []
 
             results = await client.search(
                 collection_name=collection_name,
@@ -181,7 +192,7 @@ class QDrantAdapter(VectorDBInterface):
                     if query_vector is not None
                     else (await self.embed_data([query_text]))[0],
                 ),
-                limit=limit if limit > 0 else collection_size.count,
+                limit=limit,
                 with_vectors=with_vector,
             )
 
@@ -236,11 +247,16 @@ class QDrantAdapter(VectorDBInterface):
         client = self.get_qdrant_client()
 
         # Perform batch search with the dynamically generated requests
-        results = await client.search_batch(collection_name=collection_name, requests=requests)
+        results = await client.search_batch(
+            collection_name=collection_name, requests=requests
+        )
 
         await client.close()
 
-        return [filter(lambda result: result.score > 0.9, result_group) for result_group in results]
+        return [
+            filter(lambda result: result.score > 0.9, result_group)
+            for result_group in results
+        ]
 
     async def delete_data_points(self, collection_name: str, data_point_ids: list[str]):
         client = self.get_qdrant_client()

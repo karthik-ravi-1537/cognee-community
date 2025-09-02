@@ -4,10 +4,12 @@ import pathlib
 from os import path
 
 # Please provide an OpenAI API Key
-os.environ["LLM_API_KEY"]=""
+os.environ["LLM_API_KEY"] = ""
+
 
 async def main():
     from cognee import config, prune, add, cognify, search, SearchType
+
     # NOTE: Importing the register module we let cognee know it can use the azure vector adapter
     from cognee_community_vector_adapter_opensearch import register
 
@@ -16,14 +18,16 @@ async def main():
     config.data_root_directory(path.join(system_path, ".cognee-data"))
 
     # Please provide your azure ai search instance url and api key
-    config.set_vector_db_config({
-        "vector_db_provider": "opensearch",
-        "vector_db_url": "",
-        "vector_db_key": ""
-    })
+    config.set_vector_db_config(
+        {
+            "vector_db_provider": "opensearch",
+            "vector_db_url": "http://localhost:9200",
+            "vector_db_key": "",
+        }
+    )
 
     await prune.prune_data()
-    await prune.prune_system()
+    await prune.prune_system(metadata=True)
 
     text = """
     Natural language processing (NLP) is an interdisciplinary
@@ -36,7 +40,9 @@ async def main():
 
     query_text = "Tell me about NLP"
 
-    search_results = await search(query_type=SearchType.GRAPH_COMPLETION, query_text=query_text)
+    search_results = await search(
+        query_type=SearchType.GRAPH_COMPLETION, query_text=query_text
+    )
 
     for result_text in search_results:
         print("\nSearch result: \n" + result_text)

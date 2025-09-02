@@ -6,19 +6,25 @@ from uuid import UUID
 from typing import List, Dict, Any, Optional, Tuple, Type, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from cognee.infrastructure.databases.vector.vector_db_interface import VectorDBInterface
-    from cognee.infrastructure.databases.graph.graph_db_interface import GraphDBInterface
+    from cognee.infrastructure.databases.vector.vector_db_interface import (
+        VectorDBInterface,
+    )
+    from cognee.infrastructure.databases.graph.graph_db_interface import (
+        GraphDBInterface,
+    )
 
 from falkordb.falkordb import FalkorDB
 
-from cognee.exceptions import InvalidValueError
+from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.graph.graph_db_interface import (
     record_graph_changes,
     NodeData,
     EdgeData,
     Node,
 )
-from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import EmbeddingEngine
+from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
+    EmbeddingEngine,
+)
 from cognee.infrastructure.engine import DataPoint
 from falkordb.graph import Graph, QueryResult
 
@@ -134,7 +140,7 @@ class FalkorDBAdapter:
             - list[list[float]]: A list of lists, where each inner list contains float values
               representing the embedded vectors.
         """
-        return await self.embedding_engine.embed_text(data) # type: ignore
+        return await self.embedding_engine.embed_text(data)  # type: ignore
 
     async def stringify_properties(self, properties: dict) -> str:
         """
@@ -195,9 +201,13 @@ class FalkorDBAdapter:
                 return f"'{escaped_value}'"
             return f"'{str(value)}'"
 
-        return ",".join([f"{key}:{parse_value(value)}" for key, value in properties.items()])
+        return ",".join(
+            [f"{key}:{parse_value(value)}" for key, value in properties.items()]
+        )
 
-    async def create_data_point_query(self, data_point: DataPoint, vectorized_values: dict) -> Tuple[str, dict]:
+    async def create_data_point_query(
+        self, data_point: DataPoint, vectorized_values: dict
+    ) -> Tuple[str, dict]:
         """
         Compose a query to create or update a data point in the database.
 
@@ -239,7 +249,11 @@ class FalkorDBAdapter:
                     clean_properties[key] = str(value)
                 elif isinstance(value, dict):
                     clean_properties[key] = json.dumps(value)
-                elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], float):
+                elif (
+                    isinstance(value, list)
+                    and len(value) > 0
+                    and isinstance(value[0], float)
+                ):
                     # This is likely a vector - convert to string representation
                     clean_properties[key] = f"vecf32({value})"
                 else:
@@ -360,7 +374,9 @@ class FalkorDBAdapter:
         vector_map: dict[str, dict[str, int | None]] = {}
 
         for data_point in data_points:
-            property_names: list[str] = DataPoint.get_embeddable_property_names(data_point)
+            property_names: list[str] = DataPoint.get_embeddable_property_names(
+                data_point
+            )
             key = str(data_point.id)
             vector_map[key] = {}
 
@@ -384,10 +400,14 @@ class FalkorDBAdapter:
                 else:
                     vectorized_data[property_name] = None
 
-            query, params = await self.create_data_point_query(data_point, vectorized_data)
+            query, params = await self.create_data_point_query(
+                data_point, vectorized_data
+            )
             self.query(query, params)
 
-    async def create_vector_index(self, index_name: str, index_property_name: str) -> None:
+    async def create_vector_index(
+        self, index_name: str, index_property_name: str
+    ) -> None:
         """
         Create a vector index in the specified graph for a given property if it does not already
         exist.
@@ -403,10 +423,14 @@ class FalkorDBAdapter:
 
         if not self.has_vector_index(graph, index_name, index_property_name):
             graph.create_node_vector_index(
-                index_name, index_property_name, dim=self.embedding_engine.get_vector_size()
+                index_name,
+                index_property_name,
+                dim=self.embedding_engine.get_vector_size(),
             )
 
-    def has_vector_index(self, graph: Graph, index_name: str, index_property_name: str) -> bool:
+    def has_vector_index(
+        self, graph: Graph, index_name: str, index_property_name: str
+    ) -> bool:
         """
         Determine if a vector index exists on the specified property of the given graph.
 
@@ -467,7 +491,11 @@ class FalkorDBAdapter:
                     clean_properties[key] = str(value)
                 elif isinstance(value, dict):
                     clean_properties[key] = json.dumps(value)
-                elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], float):
+                elif (
+                    isinstance(value, list)
+                    and len(value) > 0
+                    and isinstance(value[0], float)
+                ):
                     # This is likely a vector - convert to string representation
                     clean_properties[key] = f"vecf32({value})"
                 else:
@@ -501,7 +529,7 @@ class FalkorDBAdapter:
         """
         await self.create_data_points(nodes)
 
-    @record_graph_changes # type: ignore # TODO: Fix record_graph_changes
+    @record_graph_changes  # type: ignore # TODO: Fix record_graph_changes
     async def add_nodes(self, nodes: Union[List[Node], List[DataPoint]]) -> None:
         """
         Add multiple nodes to the graph in a single operation.
@@ -551,7 +579,7 @@ class FalkorDBAdapter:
         query = await self.create_edge_query(edge_tuple)
         self.query(query)
 
-    @record_graph_changes # type: ignore # TODO: Fix record_graph_changes
+    @record_graph_changes  # type: ignore # TODO: Fix record_graph_changes
     async def add_edges(self, edges: List[EdgeData]) -> None:
         """
         Add multiple edges to the graph in a single operation.
@@ -690,11 +718,15 @@ class FalkorDBAdapter:
 
         for neighbour in predecessors:
             neighbour = neighbour["relation"]
-            connections.append((neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2]))
+            connections.append(
+                (neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2])
+            )
 
         for neighbour in successors:
             neighbour = neighbour["relation"]
-            connections.append((neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2]))
+            connections.append(
+                (neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2])
+            )
 
         return connections
 
@@ -728,7 +760,7 @@ class FalkorDBAdapter:
             Returns the search results as a result set from the graph database.
         """
         if query_text is None and query_vector is None:
-            raise InvalidValueError(message="One of query_text or query_vector must be provided!")
+            raise MissingQueryParameterError()
 
         if query_text and not query_vector:
             query_vector = (await self.embed_data([query_text]))[0]
@@ -849,7 +881,9 @@ class FalkorDBAdapter:
 
         return (nodes, edges)
 
-    async def delete_data_points(self, collection_name: str, data_point_ids: list[UUID]) -> QueryResult:
+    async def delete_data_points(
+        self, collection_name: str, data_point_ids: list[UUID]
+    ) -> QueryResult:
         """
         Remove specified data points from the graph database based on their IDs.
 
@@ -1006,7 +1040,9 @@ class FalkorDBAdapter:
                 )
         return edges
 
-    async def has_edge(self, source_id: str, target_id: str, relationship_name: str) -> bool:
+    async def has_edge(
+        self, source_id: str, target_id: str, relationship_name: str
+    ) -> bool:
         """
         Verify if an edge exists between two specified nodes.
 
@@ -1036,7 +1072,7 @@ class FalkorDBAdapter:
 
         if result.result_set and len(result.result_set) > 0:
             # FalkorDB returns scalar results as a list, access by index instead of key
-            return result.result_set[0][0] # type: ignore
+            return result.result_set[0][0]  # type: ignore
         return False
 
     async def get_graph_metrics(self, include_optional: bool = False) -> Dict[str, Any]:
@@ -1061,7 +1097,9 @@ class FalkorDBAdapter:
             "num_nodes": num_nodes,
             "num_edges": num_edges,
             "mean_degree": (2 * num_edges) / num_nodes if num_nodes > 0 else 0,
-            "edge_density": num_edges / (num_nodes * (num_nodes - 1)) if num_nodes > 1 else 0,
+            "edge_density": num_edges / (num_nodes * (num_nodes - 1))
+            if num_nodes > 1
+            else 0,
             "num_connected_components": 1,  # Simplified for now
             "sizes_of_connected_components": [num_nodes] if num_nodes > 0 else [],
         }
@@ -1237,6 +1275,7 @@ class FalkorDBAdapter:
         Prune the graph by deleting the entire graph structure.
         """
         await self.delete_graph()
+
 
 if TYPE_CHECKING:
     _a: GraphDBInterface = FalkorDBAdapter("", 0, None)

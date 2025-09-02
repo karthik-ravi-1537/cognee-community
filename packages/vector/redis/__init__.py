@@ -1,3 +1,3 @@
 from .redis_adapter import RedisAdapter
 
-__all__ = ["RedisAdapter"] 
+__all__ = ["RedisAdapter"]

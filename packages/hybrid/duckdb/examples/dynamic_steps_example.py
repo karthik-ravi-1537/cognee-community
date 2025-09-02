@@ -165,11 +165,13 @@ async def main(enable_steps: dict[str, bool]) -> None:
     from cognee_community_hybrid_adapter_duckdb import register
 
     # Please provide your Milvus instance url or local path
-    cognee.config.set_vector_db_config({
-        "vector_db_provider": "duckdb",
-        "vector_db_url": None,
-        # "vector_db_port": 6379,
-    })
+    cognee.config.set_vector_db_config(
+        {
+            "vector_db_provider": "duckdb",
+            "vector_db_url": None,
+            # "vector_db_port": 6379,
+        }
+    )
 
     # Step 1: Reset data and system state
     if enable_steps.get("prune_data"):
@@ -195,7 +197,8 @@ async def main(enable_steps: dict[str, bool]) -> None:
     # Step 4: Query insights
     if enable_steps.get("retriever"):
         search_results = await cognee.search(
-            query_type=SearchType.GRAPH_COMPLETION, query_text="Who has experience in design tools?"
+            query_type=SearchType.GRAPH_COMPLETION,
+            query_text="Who has experience in design tools?",
         )
         print(search_results)
 

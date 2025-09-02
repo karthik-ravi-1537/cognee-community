@@ -17,14 +17,16 @@ from azure.search.documents.models import VectorizedQuery
 from azure.core.credentials import AzureKeyCredential
 from azure.core.exceptions import ResourceNotFoundError
 
-from cognee.exceptions import InvalidValueError
 from cognee.shared.logging_utils import get_logger
 from cognee.infrastructure.engine import DataPoint
 from cognee.infrastructure.engine.utils import parse_id
 from cognee.modules.storage.utils import get_own_properties
+from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector import VectorDBInterface
 from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
-from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import EmbeddingEngine
+from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
+    EmbeddingEngine,
+)
 from cognee.infrastructure.databases.vector.exceptions import (
     CollectionNotFoundError,
 )
@@ -46,16 +48,16 @@ class AzureAISearchAdapter(VectorDBInterface):
     index_client: SearchIndexClient = None
 
     def __init__(
-            self,
-            url: Optional[str] = None,
-            api_key: Optional[str] = None,
-            embedding_engine: EmbeddingEngine = None,
-            endpoint: Optional[str] = None,
-            **kwargs  # Accept additional keyword arguments
+        self,
+        url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        embedding_engine: EmbeddingEngine = None,
+        endpoint: Optional[str] = None,
+        **kwargs,  # Accept additional keyword arguments
     ):
         # Handle both 'url' and 'endpoint' parameters
         # Also handle the 'utl' typo that appears to be in cognee
-        final_endpoint = endpoint or url or kwargs.get('utl')
+        final_endpoint = endpoint or url or kwargs.get("utl")
 
         if not (final_endpoint and api_key and embedding_engine):
             raise ValueError("Missing required Azure AI Search credentials!")
@@ -64,7 +66,9 @@ class AzureAISearchAdapter(VectorDBInterface):
         self.api_key = api_key
         self.embedding_engine = embedding_engine
         self.credential = AzureKeyCredential(api_key)
-        self.index_client = SearchIndexClient(endpoint=self.endpoint, credential=self.credential)
+        self.index_client = SearchIndexClient(
+            endpoint=self.endpoint, credential=self.credential
+        )
         self.VECTOR_DB_LOCK = asyncio.Lock()
 
     def _sanitize_index_name(self, name: str) -> str:
@@ -77,25 +81,25 @@ class AzureAISearchAdapter(VectorDBInterface):
         import re
 
         # Convert to lowercase and replace invalid characters with dashes
-        sanitized = re.sub(r'[^a-z0-9-]', '-', name.lower())
+        sanitized = re.sub(r"[^a-z0-9-]", "-", name.lower())
 
         # Replace multiple consecutive dashes with a single dash
-        sanitized = re.sub(r'-+', '-', sanitized)
+        sanitized = re.sub(r"-+", "-", sanitized)
 
         # Remove leading and trailing dashes
-        sanitized = sanitized.strip('-')
+        sanitized = sanitized.strip("-")
 
         # Ensure it doesn't start with a number (add prefix if needed)
         if sanitized and sanitized[0].isdigit():
-            sanitized = 'idx-' + sanitized
+            sanitized = "idx-" + sanitized
 
         # Truncate to 128 characters if necessary
         if len(sanitized) > 128:
-            sanitized = sanitized[:128].rstrip('-')
+            sanitized = sanitized[:128].rstrip("-")
 
         # If empty after sanitization, use a default name
         if not sanitized:
-            sanitized = 'default-index'
+            sanitized = "default-index"
 
         return sanitized
 
@@ -195,7 +199,9 @@ class AzureAISearchAdapter(VectorDBInterface):
 
             self.index_client.create_or_update_index(index)
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(
+        self, collection_name: str, data_points: List[DataPoint]
+    ):
         """Upload data points to the search index."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
@@ -230,11 +236,15 @@ class AzureAISearchAdapter(VectorDBInterface):
             # Check for any failures
             failed_docs = [doc for doc in result if not doc.succeeded]
             if failed_docs:
-                logger.error(f"Failed to upload {len(failed_docs)} documents to Azure AI Search")
+                logger.error(
+                    f"Failed to upload {len(failed_docs)} documents to Azure AI Search"
+                )
                 for doc in failed_docs:
                     logger.error(f"Document {doc.key} failed: {doc.error_message}")
 
-    async def retrieve(self, collection_name: str, data_point_ids: List[str]) -> List[ScoredResult]:
+    async def retrieve(
+        self, collection_name: str, data_point_ids: List[str]
+    ) -> List[ScoredResult]:
         """Retrieve documents by their IDs."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
@@ -251,12 +261,14 @@ class AzureAISearchAdapter(VectorDBInterface):
 
                     # Parse the payload back from JSON string
                     import json
+
                     payload_str = document.get("payload", "{}")
                     try:
                         payload = json.loads(payload_str)
                     except json.JSONDecodeError:
                         # Try to parse as Python literal if JSON parsing fails
                         import ast
+
                         try:
                             payload = ast.literal_eval(payload_str)
                         except (ValueError, SyntaxError):
@@ -271,35 +283,39 @@ class AzureAISearchAdapter(VectorDBInterface):
                         )
                     )
                 except ResourceNotFoundError:
-                    logger.warning(f"Document with ID '{doc_id}' not found in index '{collection_name}'")
+                    logger.warning(
+                        f"Document with ID '{doc_id}' not found in index '{collection_name}'"
+                    )
                     continue
 
             return results
 
     async def search(
-            self,
-            collection_name: str,
-            query_text: Optional[str] = None,
-            query_vector: Optional[List[float]] = None,
-            limit: int = 15,
-            with_vector: bool = False,
-            normalized: bool = True,
+        self,
+        collection_name: str,
+        query_text: Optional[str] = None,
+        query_vector: Optional[List[float]] = None,
+        limit: int = 15,
+        with_vector: bool = False,
+        normalized: bool = True,
     ) -> List[ScoredResult]:
         """Perform vector or hybrid search."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
         if query_text is None and query_vector is None:
-            raise InvalidValueError(message="One of query_text or query_vector must be provided!")
+            raise MissingQueryParameterError()
 
         if not await self.has_collection(collection_name):
-            logger.warning(f"Index '{collection_name}' not found in AzureAISearchAdapter.search; returning [].")
+            logger.warning(
+                f"Index '{collection_name}' not found in AzureAISearchAdapter.search; returning []."
+            )
             return []
 
         if query_vector is None and query_text:
             query_vector = (await self.embed_data([query_text]))[0]
 
         # Ensure limit is within Azure AI Search's valid range (1-10000)
-        if limit > 0:
+        if limit and limit > 0:
             limit = min(limit, 10000)
         else:
             limit = 10000
@@ -339,6 +355,7 @@ class AzureAISearchAdapter(VectorDBInterface):
                 except json.JSONDecodeError:
                     # Try to parse as Python literal if JSON parsing fails
                     import ast
+
                     try:
                         payload = ast.literal_eval(payload_str)
                     except (ValueError, SyntaxError):
@@ -352,18 +369,20 @@ class AzureAISearchAdapter(VectorDBInterface):
                             **payload,
                             "id": parse_id(result["id"]),
                         },
-                        score=result["@search.score"] if normalized else 1 - result["@search.score"],
+                        score=result["@search.score"]
+                        if normalized
+                        else 1 - result["@search.score"],
                     )
                 )
 
             return scored_results
 
     async def batch_search(
-            self,
-            collection_name: str,
-            query_texts: List[str],
-            limit: int = None,
-            with_vectors: bool = False,
+        self,
+        collection_name: str,
+        query_texts: List[str],
+        limit: int = None,
+        with_vectors: bool = False,
     ) -> List[List[ScoredResult]]:
         """Perform batch vector search."""
         query_vectors = await self.embed_data(query_texts)
@@ -403,7 +422,9 @@ class AzureAISearchAdapter(VectorDBInterface):
             # Check for any failures
             failed_docs = [doc for doc in result if not doc.succeeded]
             if failed_docs:
-                logger.error(f"Failed to delete {len(failed_docs)} documents from Azure AI Search")
+                logger.error(
+                    f"Failed to delete {len(failed_docs)} documents from Azure AI Search"
+                )
                 for doc in failed_docs:
                     logger.error(f"Document {doc.key} failed: {doc.error_message}")
 
@@ -412,7 +433,7 @@ class AzureAISearchAdapter(VectorDBInterface):
         await self.create_collection(f"{index_name}_{index_property_name}")
 
     async def index_data_points(
-            self, index_name: str, index_property_name: str, data_points: List[DataPoint]
+        self, index_name: str, index_property_name: str, data_points: List[DataPoint]
     ):
         """Index data points for a specific property."""
         await self.create_data_points(

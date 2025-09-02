@@ -6,8 +6,10 @@ from os import path
 # Please provide an API Key if needed
 os.environ.setdefault("LLM_API_KEY", "")
 
+
 async def main():
     from cognee import config, prune, add, cognify, search, SearchType
+
     # NOTE: Importing the register module we let cognee know it can use the Falkor graph adapter
     from cognee_community_hybrid_adapter_falkor import register
 
@@ -15,23 +17,29 @@ async def main():
     config.system_root_directory(path.join(system_path, ".cognee_system"))
     config.data_root_directory(path.join(system_path, ".data_storage"))
 
-    config.set_graph_db_config({
-        "graph_database_provider": "falkordb",
-    })
+    config.set_graph_db_config(
+        {
+            "graph_database_provider": "falkordb",
+        }
+    )
 
-    config.set_vector_db_config({
-        "vector_db_provider": "falkordb",
-        "vector_db_url": "localhost",
-        "vector_db_port": 6379,
-    })
+    config.set_vector_db_config(
+        {
+            "vector_db_provider": "falkordb",
+            "vector_db_url": "localhost",
+            "vector_db_port": 6379,
+        }
+    )
 
     # Please provide your Falkor instance configuration
-    config.set_graph_db_config({
-        "graph_database_url": "localhost",
-        "graph_database_port": 6379,
-    })
+    config.set_graph_db_config(
+        {
+            "graph_database_url": "localhost",
+            "graph_database_port": 6379,
+        }
+    )
     await prune.prune_data()
-    await prune.prune_system()
+    await prune.prune_system(metadata=True)
 
     await add("""
     Natural language processing (NLP) is an interdisciplinary
@@ -47,10 +55,13 @@ async def main():
 
     query_text = "Tell me about NLP"
 
-    search_results = await search(query_type=SearchType.GRAPH_COMPLETION, query_text=query_text)
+    search_results = await search(
+        query_type=SearchType.GRAPH_COMPLETION, query_text=query_text
+    )
 
     for result_text in search_results:
         print("\nSearch result: \n" + result_text)
-    
+
+
 if __name__ == "__main__":
     asyncio.run(main())
