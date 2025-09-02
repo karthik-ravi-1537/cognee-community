@@ -12,7 +12,6 @@ async def cognee_demo():
     # Get file path to document to process
     from pathlib import Path
 
-
     # Please provide your Milvus instance url or local path
     cognee.config.set_vector_db_config(
         {

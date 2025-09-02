@@ -26,7 +26,8 @@ class GraphDBInterface(Protocol):
     ) -> None: ...
     async def add_edges(
         self,
-        edges: list[tuple[str, str, str, dict[str, Any]]] | list[tuple[str, str, str, dict[str, Any] | None]],
+        edges: list[tuple[str, str, str, dict[str, Any]]]
+        | list[tuple[str, str, str, dict[str, Any] | None]],
     ) -> None: ...
     async def delete_graph(self) -> None: ...
     async def get_graph_data(

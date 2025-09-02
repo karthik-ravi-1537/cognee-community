@@ -446,9 +446,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         """[GRAPH] Add a node to the graph."""
         raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
-    async def add_nodes(
-        self, nodes: list[tuple[str, dict[str, Any]]] | list[DataPoint]
-    ) -> None:
+    async def add_nodes(self, nodes: list[tuple[str, dict[str, Any]]] | list[DataPoint]) -> None:
         """[GRAPH] Add multiple nodes to the graph."""
         raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")
 
@@ -480,7 +478,8 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
 
     async def add_edges(
         self,
-        edges: list[tuple[str, str, str, dict[str, Any]]] | list[tuple[str, str, str, dict[str, Any] | None]],
+        edges: list[tuple[str, str, str, dict[str, Any]]]
+        | list[tuple[str, str, str, dict[str, Any] | None]],
     ) -> None:
         """[GRAPH] Add multiple edges to the graph."""
         raise NotImplementedError("Graph operations are not implemented for DuckDB adapter")

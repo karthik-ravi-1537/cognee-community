@@ -161,7 +161,6 @@ Negotiation and Relationship Building
 
 
 async def main(enable_steps: dict[str, bool]) -> None:
-
     # Please provide your Milvus instance url or local path
     cognee.config.set_vector_db_config(
         {

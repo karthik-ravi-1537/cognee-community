@@ -157,7 +157,6 @@ class QDrantAdapter(VectorDBInterface):
         limit: int = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
-
         if query_text is None and query_vector is None:
             raise MissingQueryParameterError()
 

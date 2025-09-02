@@ -714,9 +714,7 @@ class NetworkXAdapter(GraphDBInterface):
         """
         raise NodesetFilterNotSupportedError
 
-    async def get_filtered_graph_data(
-        self, attribute_filters: list[dict[str, list[str | int]]]
-    ):
+    async def get_filtered_graph_data(self, attribute_filters: list[dict[str, list[str | int]]]):
         """
         Fetch nodes and relationships filtered by specified attributes.
 
