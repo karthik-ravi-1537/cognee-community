@@ -23,10 +23,10 @@ async def main():
             "vector_db_provider": "weaviate",
             "vector_db_url": os.getenv(
                 "WEAVIATE_API_URL",
-                "tnszcl0mqtgqtmfe7u93a.c0.europe-west3.gcp.weaviate.cloud",
+                "",
             ),
             "vector_db_key": os.getenv(
-                "WEAVIATE_API_KEY", "aBGomevbiZodi0ilHcnl66zLNizD9pfBftNl"
+                "WEAVIATE_API_KEY", ""
             ),
         }
     )
