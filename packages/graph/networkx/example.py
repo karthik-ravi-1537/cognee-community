@@ -1,6 +1,6 @@
-import sys
 import asyncio
 import pathlib
+import sys
 from os import path
 
 ######### Needed only for this example, not to be used in production code.
@@ -9,11 +9,10 @@ sys.path.append(packages_module_path)
 #########
 
 # NOTE: Importing the register module we let cognee know it can use the Networkx adapter
-from cognee_community_graph_adapter_networkx import register
 
 
 async def main():
-    from cognee import config, prune, add, cognify, search, SearchType
+    from cognee import SearchType, add, cognify, config, prune, search
 
     system_path = pathlib.Path(__file__).parent
     config.system_root_directory(path.join(system_path, ".cognee-system"))

@@ -1,18 +1,16 @@
 import asyncio
-from typing import Dict, List, Optional
-from qdrant_client import AsyncQdrantClient, models
 
-from cognee.shared.logging_utils import get_logger
-
-from cognee.infrastructure.engine import DataPoint
-from cognee.infrastructure.engine.utils import parse_id
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector import VectorDBInterface
-from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
 from cognee.infrastructure.databases.vector.exceptions import CollectionNotFoundError
+from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
+from cognee.infrastructure.engine import DataPoint
+from cognee.infrastructure.engine.utils import parse_id
+from cognee.shared.logging_utils import get_logger
+from qdrant_client import AsyncQdrantClient, models
 
 logger = get_logger("QDrantAdapter")
 
@@ -23,19 +21,19 @@ class IndexSchema(DataPoint):
     metadata: dict = {"index_fields": ["text"]}
 
 
-def create_hnsw_config(hnsw_config: Dict):
+def create_hnsw_config(hnsw_config: dict):
     if hnsw_config is not None:
         return models.HnswConfig()
     return None
 
 
-def create_optimizers_config(optimizers_config: Dict):
+def create_optimizers_config(optimizers_config: dict):
     if optimizers_config is not None:
         return models.OptimizersConfig()
     return None
 
 
-def create_quantization_config(quantization_config: Dict):
+def create_quantization_config(quantization_config: dict):
     if quantization_config is not None:
         return models.QuantizationConfig()
     return None
@@ -65,7 +63,7 @@ class QDrantAdapter(VectorDBInterface):
 
         return AsyncQdrantClient(location=":memory:")
 
-    async def embed_data(self, data: List[str]) -> List[float]:
+    async def embed_data(self, data: list[str]) -> list[float]:
         return await self.embedding_engine.embed_text(data)
 
     async def has_collection(self, collection_name: str) -> bool:
@@ -95,7 +93,7 @@ class QDrantAdapter(VectorDBInterface):
 
             await client.close()
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(self, collection_name: str, data_points: list[DataPoint]):
         from qdrant_client.http.exceptions import UnexpectedResponse
 
         client = self.get_qdrant_client()
@@ -154,12 +152,11 @@ class QDrantAdapter(VectorDBInterface):
     async def search(
         self,
         collection_name: str,
-        query_text: Optional[str] = None,
-        query_vector: Optional[List[float]] = None,
+        query_text: str | None = None,
+        query_vector: list[float] | None = None,
         limit: int = 15,
         with_vector: bool = False,
-    ) -> List[ScoredResult]:
-        from qdrant_client.http.exceptions import UnexpectedResponse
+    ) -> list[ScoredResult]:
 
         if query_text is None and query_vector is None:
             raise MissingQueryParameterError()
@@ -209,7 +206,7 @@ class QDrantAdapter(VectorDBInterface):
     async def batch_search(
         self,
         collection_name: str,
-        query_texts: List[str],
+        query_texts: list[str],
         limit: int = None,
         with_vectors: bool = False,
     ):

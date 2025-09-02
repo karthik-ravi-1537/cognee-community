@@ -1,7 +1,7 @@
 import asyncio
-import cognee
-
 import os
+
+import cognee
 
 # By default cognee uses OpenAI's gpt-5-mini LLM model
 # Provide your OpenAI LLM API KEY
@@ -12,7 +12,6 @@ async def cognee_demo():
     # Get file path to document to process
     from pathlib import Path
 
-    from cognee_community_hybrid_adapter_duckdb import register
 
     # Please provide your Milvus instance url or local path
     cognee.config.set_vector_db_config(

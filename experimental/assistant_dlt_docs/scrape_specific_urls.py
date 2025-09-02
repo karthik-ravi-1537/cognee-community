@@ -1,7 +1,8 @@
-import requests
 import logging
-import time
 import os
+import time
+
+import requests
 
 # Set your Firecrawl API key here:
 FIRECRAWL_API_KEY = "fc-api-key"

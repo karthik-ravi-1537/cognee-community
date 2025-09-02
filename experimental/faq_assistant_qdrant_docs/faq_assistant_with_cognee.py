@@ -1,9 +1,8 @@
-import os
 import asyncio
 import pathlib
-from cognee.shared.logging_utils import get_logger, ERROR
 
 import cognee
+from cognee.shared.logging_utils import ERROR, get_logger
 
 
 async def main():
@@ -26,7 +25,7 @@ async def main():
     if not md_file_path.exists():
         raise FileNotFoundError(f"Could not find {md_file_path}")
 
-    with open(md_file_path, "r", encoding="utf-8") as f:
+    with open(md_file_path, encoding="utf-8") as f:
         md_content = f.read()
 
     # 4) Add the .md content to cognee

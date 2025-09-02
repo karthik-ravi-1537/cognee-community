@@ -1,8 +1,7 @@
 import re
-from typing import List, Set
 
 
-def extract_specific_pages(input_files: List[str], output_file: str, main_urls: List[str]):
+def extract_specific_pages(input_files: list[str], output_file: str, main_urls: list[str]):
     """
     Extract specific pages and their subpages from the cleanedmarkdown files.
     """
@@ -10,7 +9,7 @@ def extract_specific_pages(input_files: List[str], output_file: str, main_urls: 
     all_content = ""
     for input_file in input_files:
         print(f"Reading {input_file}...")
-        with open(input_file, "r", encoding="utf-8") as f:
+        with open(input_file, encoding="utf-8") as f:
             content = f.read()
             all_content += content + "\n\n"
 
@@ -21,7 +20,7 @@ def extract_specific_pages(input_files: List[str], output_file: str, main_urls: 
 
     print(f"Found {len(page_matches)} total pages in documentation")
 
-    urls_to_extract: Set[str] = set()
+    urls_to_extract: set[str] = set()
 
     for main_url in main_urls:
         urls_to_extract.add(main_url)

@@ -1,17 +1,17 @@
-from typing import List, Optional
-from opensearchpy import AsyncOpenSearch, NotFoundError
-from cognee.infrastructure.engine import DataPoint
-from cognee.infrastructure.engine.utils import parse_id
+import asyncio
+import base64
+import json
+
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
-from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
-from cognee.infrastructure.databases.vector.vector_db_interface import VectorDBInterface
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
 from cognee.infrastructure.databases.vector.exceptions import CollectionNotFoundError
-import asyncio
-import base64
-import json
+from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
+from cognee.infrastructure.databases.vector.vector_db_interface import VectorDBInterface
+from cognee.infrastructure.engine import DataPoint
+from cognee.infrastructure.engine.utils import parse_id
+from opensearchpy import AsyncOpenSearch, NotFoundError
 
 
 class IndexSchema(DataPoint):
@@ -38,11 +38,11 @@ class OpenSearchAdapter(VectorDBInterface):
 
     def __init__(
         self,
-        url: Optional[str] = None,
-        api_key: Optional[str] = None,
+        url: str | None = None,
+        api_key: str | None = None,
         embedding_engine: EmbeddingEngine = None,
-        endpoint: Optional[str] = None,
-        **kwargs: Optional[dict],  # Accept additional keyword arguments
+        endpoint: str | None = None,
+        **kwargs: dict | None,  # Accept additional keyword arguments
     ):
         """
         Initialize the OpenSearchAdapter.
@@ -131,7 +131,7 @@ class OpenSearchAdapter(VectorDBInterface):
         else:
             return f"{collection_name}".lower()
 
-    async def embed_data(self, data: List[str]) -> List[List[float]]:
+    async def embed_data(self, data: list[str]) -> list[list[float]]:
         """
         Embed a list of texts into vectors using the specified embedding engine.
 
@@ -231,7 +231,7 @@ class OpenSearchAdapter(VectorDBInterface):
             ],
         )
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(self, collection_name: str, data_points: list[DataPoint]):
         """
         Create or update data points in the specified collection.
 
@@ -252,7 +252,7 @@ class OpenSearchAdapter(VectorDBInterface):
         # Bulk insert
         await self.client.bulk(body=actions, refresh=True)
 
-    async def retrieve(self, collection_name: str, data_point_ids: List[str]):
+    async def retrieve(self, collection_name: str, data_point_ids: list[str]):
         """
         Retrieve data points by their IDs from a collection.
 
@@ -281,11 +281,11 @@ class OpenSearchAdapter(VectorDBInterface):
     async def search(
         self,
         collection_name: str,
-        query_text: Optional[str] = None,
-        query_vector: Optional[List[float]] = None,
+        query_text: str | None = None,
+        query_vector: list[float] | None = None,
         limit: int = 15,
         with_vector: bool = False,
-    ) -> List[ScoredResult]:
+    ) -> list[ScoredResult]:
         """
         Search for similar data points in a collection using a query text or vector.
 
@@ -342,7 +342,7 @@ class OpenSearchAdapter(VectorDBInterface):
     async def batch_search(
         self,
         collection_name: str,
-        query_texts: List[str],
+        query_texts: list[str],
         limit: int = 15,
         with_vectors: bool = False,
     ):
@@ -372,7 +372,7 @@ class OpenSearchAdapter(VectorDBInterface):
         ]
         return await asyncio.gather(*tasks)
 
-    async def delete_data_points(self, collection_name: str, data_point_ids: List[str]):
+    async def delete_data_points(self, collection_name: str, data_point_ids: list[str]):
         """
         Delete data points by their IDs from a collection.
 

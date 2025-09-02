@@ -1,9 +1,10 @@
+import logging
+import os
+import time
+from collections import deque
+
 import requests
 from bs4 import BeautifulSoup
-from collections import deque
-import logging
-import time
-import os
 
 # Set your Firecrawl API key here:
 FIRECRAWL_API_KEY = "YOUR_FIRECRAWL_API_KEY"

@@ -3,7 +3,8 @@ Expose `get_keywordsai_observe()` – a decorator factory that mimics Cognee's
 `@observe`, but sends spans to Keywords AI using `keywordsai-tracing`.
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from keywordsai_tracing.decorators import task, workflow
 from keywordsai_tracing.main import KeywordsAITelemetry

@@ -1,5 +1,5 @@
-import os
 import asyncio
+import os
 import pathlib
 from os import path
 
@@ -8,10 +8,9 @@ os.environ.setdefault("LLM_API_KEY", "")
 
 
 async def main() -> None:
-    from cognee import config, prune, add, cognify, search, SearchType
+    from cognee import SearchType, add, cognify, config, prune, search
 
     # NOTE: Importing the register module we let cognee know it can use the Milvus vector adapter
-    from cognee_community_vector_adapter_milvus import register
 
     system_path = pathlib.Path(__file__).parent
     config.system_root_directory(path.join(system_path, ".cognee_system"))
@@ -36,7 +35,7 @@ async def main() -> None:
 
     await add("""
     Sandwhiches are best served toasted with cheese, ham, mayo,
-    lettuce, mustard, and salt & pepper.          
+    lettuce, mustard, and salt & pepper.
     """)
 
     await cognify()

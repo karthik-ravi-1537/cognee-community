@@ -1,21 +1,21 @@
 """Memgraph Adapter for Graph Database"""
 
-import json
-from cognee.shared.logging_utils import get_logger, ERROR
 import asyncio
-from textwrap import dedent
-from typing import Optional, Any, List, Dict, Type, Tuple
+import json
 from contextlib import asynccontextmanager
+from textwrap import dedent
+from typing import Any, Optional
 from uuid import UUID
-from neo4j import AsyncSession
-from neo4j import AsyncGraphDatabase
-from neo4j.exceptions import Neo4jError
-from cognee.infrastructure.engine import DataPoint
-from cognee.infrastructure.databases.graph.graph_db_interface import GraphDBInterface
-from cognee.modules.storage.utils import JSONEncoder
+
 from cognee.infrastructure.databases.exceptions.exceptions import (
     NodesetFilterNotSupportedError,
 )
+from cognee.infrastructure.databases.graph.graph_db_interface import GraphDBInterface
+from cognee.infrastructure.engine import DataPoint
+from cognee.modules.storage.utils import JSONEncoder
+from cognee.shared.logging_utils import ERROR, get_logger
+from neo4j import AsyncGraphDatabase, AsyncSession
+from neo4j.exceptions import Neo4jError
 
 logger = get_logger("MemgraphAdapter", level=ERROR)
 
@@ -86,8 +86,8 @@ class MemgraphAdapter(GraphDBInterface):
     async def query(
         self,
         query: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        params: Optional[dict[str, Any]] = None,
+    ) -> list[dict[str, Any]]:
         """
         Execute a provided query on the Memgraph database and return the results.
 
@@ -197,7 +197,7 @@ class MemgraphAdapter(GraphDBInterface):
             for node in nodes
         ]
 
-        results = await self.query(query, dict(nodes=nodes))
+        results = await self.query(query, {"nodes": nodes})
         return results
 
     async def extract_node(self, node_id: str):
@@ -218,7 +218,7 @@ class MemgraphAdapter(GraphDBInterface):
 
         return results[0] if len(results) > 0 else None
 
-    async def extract_nodes(self, node_ids: List[str]):
+    async def extract_nodes(self, node_ids: list[str]):
         """
         Retrieve multiple nodes based on their IDs.
 
@@ -362,7 +362,7 @@ class MemgraphAdapter(GraphDBInterface):
         from_node: UUID,
         to_node: UUID,
         relationship_name: str,
-        edge_properties: Optional[Dict[str, Any]] = None,
+        edge_properties: Optional[dict[str, Any]] = None,
     ):
         """
         Add a directed edge between two nodes with optional properties.
@@ -452,7 +452,7 @@ class MemgraphAdapter(GraphDBInterface):
         ]
 
         try:
-            results = await self.query(query, dict(edges=edges))
+            results = await self.query(query, {"edges": edges})
             return results
         except Neo4jError as error:
             logger.error("Memgraph query error: %s", error, exc_info=True)
@@ -477,7 +477,7 @@ class MemgraphAdapter(GraphDBInterface):
         RETURN n, r, m
         """
 
-        results = await self.query(query, dict(node_id=node_id))
+        results = await self.query(query, {"node_id": node_id})
 
         return [
             (
@@ -531,7 +531,7 @@ class MemgraphAdapter(GraphDBInterface):
         results = await self.query(query)
         return results[0]["ids"] if len(results) > 0 else []
 
-    async def get_predecessors(self, node_id: str, edge_label: str = None) -> list[str]:
+    async def get_predecessors(self, node_id: str, edge_label: Optional[str] = None) -> list[str]:
         """
         Retrieve all predecessors of a node based on its ID and optional edge label.
 
@@ -555,10 +555,10 @@ class MemgraphAdapter(GraphDBInterface):
 
             results = await self.query(
                 query,
-                dict(
-                    node_id=node_id,
-                    edge_label=edge_label,
-                ),
+                {
+                    "node_id": node_id,
+                    "edge_label": edge_label,
+                },
             )
 
             return [result["predecessor"] for result in results]
@@ -571,14 +571,14 @@ class MemgraphAdapter(GraphDBInterface):
 
             results = await self.query(
                 query,
-                dict(
-                    node_id=node_id,
-                ),
+                {
+                    "node_id": node_id,
+                },
             )
 
             return [result["predecessor"] for result in results]
 
-    async def get_successors(self, node_id: str, edge_label: str = None) -> list[str]:
+    async def get_successors(self, node_id: str, edge_label: Optional[str] = None) -> list[str]:
         """
         Retrieve all successors of a node based on its ID and optional edge label.
 
@@ -602,10 +602,10 @@ class MemgraphAdapter(GraphDBInterface):
 
             results = await self.query(
                 query,
-                dict(
-                    node_id=node_id,
-                    edge_label=edge_label,
-                ),
+                {
+                    "node_id": node_id,
+                    "edge_label": edge_label,
+                },
             )
 
             return [result["successor"] for result in results]
@@ -618,14 +618,14 @@ class MemgraphAdapter(GraphDBInterface):
 
             results = await self.query(
                 query,
-                dict(
-                    node_id=node_id,
-                ),
+                {
+                    "node_id": node_id,
+                },
             )
 
             return [result["successor"] for result in results]
 
-    async def get_neighbors(self, node_id: str) -> List[Dict[str, Any]]:
+    async def get_neighbors(self, node_id: str) -> list[dict[str, Any]]:
         """
         Get both predecessors and successors of a node.
 
@@ -645,7 +645,7 @@ class MemgraphAdapter(GraphDBInterface):
 
         return predecessors + successors
 
-    async def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
+    async def get_node(self, node_id: str) -> Optional[dict[str, Any]]:
         """Get a single node by ID."""
         query = """
         MATCH (node {id: $node_id})
@@ -654,7 +654,7 @@ class MemgraphAdapter(GraphDBInterface):
         results = await self.query(query, {"node_id": node_id})
         return results[0]["node"] if results else None
 
-    async def get_nodes(self, node_ids: List[str]) -> List[Dict[str, Any]]:
+    async def get_nodes(self, node_ids: list[str]) -> list[dict[str, Any]]:
         """Get multiple nodes by their IDs."""
         query = """
         UNWIND $node_ids AS id
@@ -690,8 +690,8 @@ class MemgraphAdapter(GraphDBInterface):
         """
 
         predecessors, successors = await asyncio.gather(
-            self.query(predecessors_query, dict(node_id=str(node_id))),
-            self.query(successors_query, dict(node_id=str(node_id))),
+            self.query(predecessors_query, {"node_id": str(node_id)}),
+            self.query(successors_query, {"node_id": str(node_id)}),
         )
 
         connections = []
@@ -781,7 +781,7 @@ class MemgraphAdapter(GraphDBInterface):
 
         return await self.query(query)
 
-    def serialize_properties(self, properties=dict()):
+    def serialize_properties(self, properties=None):
         """
         Convert property values to a suitable representation for storage.
 
@@ -795,6 +795,8 @@ class MemgraphAdapter(GraphDBInterface):
 
             A dictionary of serialized properties.
         """
+        if properties is None:
+            properties = {}
         serialized_properties = {}
 
         for property_key, property_value in properties.items():
@@ -868,8 +870,8 @@ class MemgraphAdapter(GraphDBInterface):
         return (nodes, edges)
 
     async def get_nodeset_subgraph(
-        self, node_type: Type[Any], node_name: List[str]
-    ) -> Tuple[List[Tuple[int, dict]], List[Tuple[int, int, str, dict]]]:
+        self, node_type: type[Any], node_name: list[str]
+    ) -> tuple[list[tuple[int, dict]], list[tuple[int, int, str, dict]]]:
         """
         Throw an error indicating that node set filtering is not supported.
 

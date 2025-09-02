@@ -1,25 +1,24 @@
 import asyncio
-from typing import List, Optional
 
-from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
-
-from cognee.shared.logging_utils import get_logger
-from cognee.infrastructure.engine import DataPoint
-from cognee.infrastructure.engine.utils import parse_id
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
-from cognee.infrastructure.databases.vector.exceptions import CollectionNotFoundError
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
+from cognee.infrastructure.databases.vector.exceptions import CollectionNotFoundError
 from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
 from cognee.infrastructure.databases.vector.vector_db_interface import VectorDBInterface
+from cognee.infrastructure.engine import DataPoint
+from cognee.infrastructure.engine.utils import parse_id
+from cognee.shared.logging_utils import get_logger
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 logger = get_logger("WeaviateAdapter")
 
 
 def is_retryable_request(error):
-    from weaviate.exceptions import UnexpectedStatusCodeException
     from requests.exceptions import RequestException
+
+    from weaviate.exceptions import UnexpectedStatusCodeException
 
     if isinstance(error, UnexpectedStatusCodeException):
         # Retry on conflict, service unavailable, internal error
@@ -103,7 +102,7 @@ class WeaviateAdapter(VectorDBInterface):
 
         return self.client
 
-    async def embed_data(self, data: List[str]) -> List[float]:
+    async def embed_data(self, data: list[str]) -> list[float]:
         """
         Embed the given text data into vector representations.
 
@@ -214,7 +213,7 @@ class WeaviateAdapter(VectorDBInterface):
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=2, min=1, max=6),
     )
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(self, collection_name: str, data_points: list[DataPoint]):
         """
         Create or update data points in the specified collection in the Weaviate database.
 
@@ -381,8 +380,8 @@ class WeaviateAdapter(VectorDBInterface):
     async def search(
         self,
         collection_name: str,
-        query_text: Optional[str] = None,
-        query_vector: Optional[List[float]] = None,
+        query_text: str | None = None,
+        query_vector: list[float] | None = None,
         limit: int = 15,
         with_vector: bool = False,
     ):
@@ -452,7 +451,7 @@ class WeaviateAdapter(VectorDBInterface):
     async def batch_search(
         self,
         collection_name: str,
-        query_texts: List[str],
+        query_texts: list[str],
         limit: int,
         with_vectors: bool = False,
     ):

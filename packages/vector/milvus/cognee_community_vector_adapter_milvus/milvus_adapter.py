@@ -1,6 +1,6 @@
-import os
 import asyncio
-from typing import List, Dict, Optional, TYPE_CHECKING, cast
+import os
+from typing import TYPE_CHECKING, cast
 
 from pymilvus import MilvusClient
 
@@ -13,8 +13,8 @@ from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
 from cognee.infrastructure.engine import DataPoint
-from cognee.shared.logging_utils import get_logger
 from cognee.infrastructure.files.storage import get_file_storage
+from cognee.shared.logging_utils import get_logger
 from pymilvus.orm.types import DataType
 
 logger = get_logger("MilvusAdapter")
@@ -45,7 +45,7 @@ class MilvusAdapter:
 
     name = "Milvus"
 
-    def __init__(self, url: str, api_key: Optional[str], embedding_engine: EmbeddingEngine):
+    def __init__(self, url: str, api_key: str | None, embedding_engine: EmbeddingEngine):
         self.url = url
         self.api_key = api_key
         self.embedding_engine = embedding_engine
@@ -87,7 +87,7 @@ class MilvusAdapter:
 
         return client
 
-    async def embed_data(self, data: List[str]) -> List[List[float]]:
+    async def embed_data(self, data: list[str]) -> list[list[float]]:
         """
         Embed text data into vectors using the embedding engine.
 
@@ -100,7 +100,7 @@ class MilvusAdapter:
             List[List[float]]: List of embedding vectors.
         """
         result = await self.embedding_engine.embed_text(data)
-        return cast(List[List[float]], result)
+        return cast(list[list[float]], result)
 
     async def has_collection(self, collection_name: str) -> bool:
         """
@@ -123,7 +123,7 @@ class MilvusAdapter:
             return False
 
     async def create_collection(
-        self, collection_name: str, payload_schema: Optional[object] = None
+        self, collection_name: str, payload_schema: object | None = None
     ) -> None:
         """
         Create a new collection in the Milvus database.
@@ -167,7 +167,7 @@ class MilvusAdapter:
                 logger.error(f"Error creating collection {collection_name}: {e}")
                 raise
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
+    async def create_data_points(self, collection_name: str, data_points: list[DataPoint]) -> None:
         """
         Create data points in the Milvus collection.
 
@@ -254,7 +254,7 @@ class MilvusAdapter:
             raise
 
     async def index_data_points(
-        self, index_name: str, field_name: str, data_points: List[DataPoint]
+        self, index_name: str, field_name: str, data_points: list[DataPoint]
     ) -> None:
         """
         Index data points in the collection.
@@ -272,7 +272,7 @@ class MilvusAdapter:
         # This method is kept for interface compatibility
         pass
 
-    async def retrieve(self, collection_name: str, data_point_ids: List[str]) -> List[DataPoint]:
+    async def retrieve(self, collection_name: str, data_point_ids: list[str]) -> list[DataPoint]:
         """
         Retrieve data points by their IDs.
 
@@ -312,12 +312,12 @@ class MilvusAdapter:
     async def search(
         self,
         collection_name: str,
-        query_text: Optional[str] = None,
-        query_vector: Optional[List[float]] = None,
+        query_text: str | None = None,
+        query_vector: list[float] | None = None,
         limit: int = 10,
         with_vector: bool = False,
         **kwargs: object,
-    ) -> List[Dict[str, object]]:
+    ) -> list[dict[str, object]]:
         """
         Search for similar vectors in the collection.
 
@@ -393,11 +393,11 @@ class MilvusAdapter:
     async def batch_search(
         self,
         collection_name: str,
-        query_texts: List[str],
+        query_texts: list[str],
         limit: int = 10,
         with_vectors: bool = False,
         **kwargs: object,
-    ) -> List[List[Dict[str, object]]]:
+    ) -> list[list[dict[str, object]]]:
         """
         Perform batch search for multiple query texts.
 
@@ -451,7 +451,7 @@ class MilvusAdapter:
             logger.error(f"Error performing batch search in collection {collection_name}: {e}")
             raise
 
-    async def delete_data_points(self, collection_name: str, data_point_ids: List[str]) -> None:
+    async def delete_data_points(self, collection_name: str, data_point_ids: list[str]) -> None:
         """
         Delete data points from the collection.
 
@@ -488,8 +488,8 @@ class MilvusAdapter:
         pass
 
     async def get_distance_from_collection_elements(
-        self, collection_name: str, elements: List[DataPoint]
-    ) -> List[float]:
+        self, collection_name: str, elements: list[DataPoint]
+    ) -> list[float]:
         """
         Calculate distances between collection elements and given data points.
 

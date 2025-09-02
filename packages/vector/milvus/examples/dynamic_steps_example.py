@@ -3,7 +3,7 @@ import os
 
 import cognee
 from cognee.api.v1.search import SearchType
-from cognee.shared.logging_utils import setup_logging, ERROR
+from cognee.shared.logging_utils import ERROR, setup_logging
 
 job_1 = """
 CV 1: Relevant

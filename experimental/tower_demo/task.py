@@ -1,14 +1,13 @@
-import os
 import asyncio
 import json
+import os
 import pathlib
-from datetime import datetime
-from typing import Dict, Any, List
 import time
+from datetime import datetime
+from typing import Any
 
-import requests
 import pyarrow as pa
-
+import requests
 
 try:
     import tower
@@ -20,7 +19,7 @@ except ImportError:
 
 import cognee
 from cognee import visualize_graph
-from cognee.shared.logging_utils import get_logger, ERROR
+from cognee.shared.logging_utils import ERROR, get_logger
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -91,7 +90,7 @@ class HackerNewsProcessor:
         self.api_base = HN_API_BASE
         self.max_stories = MAX_STORIES
 
-    def fetch_story_data(self, story_id: int) -> Dict[str, Any]:
+    def fetch_story_data(self, story_id: int) -> dict[str, Any]:
         """Fetch individual story data from HN API"""
         try:
             response = requests.get(f"{self.api_base}/item/{story_id}.json")
@@ -101,9 +100,9 @@ class HackerNewsProcessor:
             print(f"⚠️ Error fetching story {story_id}: {e}")
         return None
 
-    def process_stories(self, last_timestamp: int = 0) -> List[Dict[str, Any]]:
+    def process_stories(self, last_timestamp: int = 0) -> list[dict[str, Any]]:
         """Extract and process Hacker News stories"""
-        print(f"📡 Extracting data from Hacker News API...")
+        print("📡 Extracting data from Hacker News API...")
         print(f"   API Base: {self.api_base}")
         print(f"   Max Stories: {self.max_stories}")
         print(f"   Last timestamp: {last_timestamp}")
@@ -140,7 +139,7 @@ class HackerNewsProcessor:
         print(f"✅ Finished processing. Total new stories: {new_stories_count}")
         return stories
 
-    def write_to_iceberg(self, stories: List[Dict[str, Any]]) -> bool:
+    def write_to_iceberg(self, stories: list[dict[str, Any]]) -> bool:
         """Write stories to Iceberg table using Tower"""
         if not TOWER_AVAILABLE:
             print("❌ Tower SDK not available - cannot write to Iceberg")
@@ -163,9 +162,9 @@ class HackerNewsProcessor:
                 f"🔧 Debug: Creating table reference for '{table_name}' in namespace '{namespace}'"
             )
             table_ref = tower.tables(table_name, namespace=namespace)
-            print(f"🔧 Debug: Table reference created, now calling create_if_not_exists...")
+            print("🔧 Debug: Table reference created, now calling create_if_not_exists...")
             table = table_ref.create_if_not_exists(HACKERNEWS_SCHEMA)
-            print(f"🔧 Debug: Table created/loaded successfully")
+            print("🔧 Debug: Table created/loaded successfully")
 
             # Get the expected field names from schema
             schema_field_names = {field.name for field in HACKERNEWS_SCHEMA}
@@ -225,7 +224,7 @@ class HackerNewsProcessor:
             import traceback
 
             print(f"⚠️ Iceberg storage failed: {e}")
-            print(f"🔧 Debug: Full error traceback:")
+            print("🔧 Debug: Full error traceback:")
             traceback.print_exc()
 
             # Provide specific guidance for common issues
@@ -239,7 +238,7 @@ class HackerNewsProcessor:
 
             return False
 
-    def read_from_iceberg(self) -> List[Dict[str, Any]]:
+    def read_from_iceberg(self) -> list[dict[str, Any]]:
         """Read articles back from Iceberg table using Tower"""
         if not TOWER_AVAILABLE:
             print("❌ Tower SDK not available - cannot read from Iceberg")
@@ -266,11 +265,11 @@ class HackerNewsProcessor:
             import traceback
 
             print(f"⚠️ Failed to read from Iceberg: {e}")
-            print(f"🔧 Debug: Full error traceback:")
+            print("🔧 Debug: Full error traceback:")
             traceback.print_exc()
             return []
 
-    def stories_to_cognee_content(self, stories: List[Dict[str, Any]]) -> str:
+    def stories_to_cognee_content(self, stories: list[dict[str, Any]]) -> str:
         """Convert all story fields to flat text format for Cognee processing"""
 
         content_parts = ["# Hacker News Stories from Iceberg - All Fields Dataset\n\n"]
@@ -285,7 +284,7 @@ class HackerNewsProcessor:
                     if isinstance(value, list):
                         if value:  # Only include non-empty lists
                             story_text += f"**{key}:** {', '.join(map(str, value))}\n"
-                    elif isinstance(value, (int, float)):
+                    elif isinstance(value, int | float):
                         if value > 0:  # Only include meaningful numbers
                             story_text += f"**{key}:** {value}\n"
                     else:
@@ -330,11 +329,11 @@ class CogneeProcessor:
         cognee.config.data_root_directory(self.data_directory)
         cognee.config.system_root_directory(self.cognee_directory)
 
-        print(f"🔧 Cognee configured:")
+        print("🔧 Cognee configured:")
         print(f"   Data directory: {self.data_directory}")
         print(f"   System directory: {self.cognee_directory}")
 
-    async def process_stories_with_cognee(self, stories: List[Dict[str, Any]]) -> str:
+    async def process_stories_with_cognee(self, stories: list[dict[str, Any]]) -> str:
         """Process stories through Cognee to build knowledge graph"""
 
         if not stories:
@@ -377,7 +376,7 @@ class CogneeProcessor:
             graph_file_path = str(current_dir / "graph_visualization.html")
             await visualize_graph(graph_file_path)
 
-            print(f"✅ Knowledge graph construction completed!")
+            print("✅ Knowledge graph construction completed!")
             print(f"📊 Graph visualization saved to: {graph_file_path}")
             return dataset_name
 
@@ -385,7 +384,7 @@ class CogneeProcessor:
             print(f"❌ Cognee processing failed: {e}")
             return None
 
-    async def search_knowledge_graph(self, queries: List[str]) -> Dict[str, Any]:
+    async def search_knowledge_graph(self, queries: list[str]) -> dict[str, Any]:
         """Search the knowledge graph with multiple queries"""
         results = {}
 
@@ -416,7 +415,7 @@ class CogneeProcessor:
         return results
 
     def store_search_results_in_iceberg(
-        self, search_results: Dict[str, str], dataset_name: str, articles_count: int
+        self, search_results: dict[str, str], dataset_name: str, articles_count: int
     ) -> bool:
         """Store search results in a separate Iceberg table"""
         if not TOWER_AVAILABLE:
@@ -460,7 +459,7 @@ class CogneeProcessor:
             import traceback
 
             print(f"⚠️ Search results storage failed: {e}")
-            print(f"🔧 Debug: Full error traceback:")
+            print("🔧 Debug: Full error traceback:")
             traceback.print_exc()
             return False
 
@@ -529,12 +528,11 @@ async def main():
         # Step 6: Write search output back to Iceberg
         print("\n💾 Step 6: Writing search results to Iceberg...")
         if TOWER_AVAILABLE:
-            search_storage_success = cognee_processor.store_search_results_in_iceberg(
+            cognee_processor.store_search_results_in_iceberg(
                 search_results, dataset_name, len(iceberg_stories)
             )
         else:
             print("⚠️ Tower SDK not available - skipping search results storage")
-            search_storage_success = False
 
         # Generate summary
         summary = {
@@ -551,13 +549,13 @@ async def main():
         with open(summary_file, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2, default=str)
 
-        print(f"\n✅ Pipeline completed successfully!")
-        print(f"📊 Summary:")
+        print("\n✅ Pipeline completed successfully!")
+        print("📊 Summary:")
         print(f"   - Stories processed: {len(iceberg_stories)}")
         print(f"   - Knowledge graph dataset: {dataset_name}")
         print(f"   - Knowledge searches: {len(search_results)}")
         print(f"   - Summary saved to: {summary_file}")
-        print(f"   - Graph visualization: ./graph_visualization.html")
+        print("   - Graph visualization: ./graph_visualization.html")
 
         return 0
 

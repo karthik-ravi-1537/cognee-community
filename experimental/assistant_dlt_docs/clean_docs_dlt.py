@@ -23,7 +23,7 @@ def clean_and_split_doc(input_file, output_file1, output_file2):
         re.DOTALL | re.IGNORECASE,
     )
 
-    with open(input_file, "r", encoding="utf-8") as f:
+    with open(input_file, encoding="utf-8") as f:
         content = f.read()
 
     content = loom_blocked_pattern.sub("", content)

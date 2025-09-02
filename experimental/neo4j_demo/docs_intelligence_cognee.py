@@ -1,11 +1,8 @@
-import os
 import asyncio
 import pathlib
-import cognee
-
-from cognee.shared.logging_utils import setup_logging, INFO
 
 import cognee
+from cognee.shared.logging_utils import INFO, setup_logging
 
 node_set_aura = ["Aura_NodeSet"]
 node_set_self_managed = ["Self-managed_NodeSet"]
@@ -29,7 +26,7 @@ async def main():
     if not aura_docs_path.exists():
         raise FileNotFoundError(f"Could not find {aura_docs_path}")
 
-    with open(aura_docs_path, "r", encoding="utf-8") as f:
+    with open(aura_docs_path, encoding="utf-8") as f:
         aura_docs_content = f.read()
 
     # 4) Add the aura .md content to cognee
@@ -40,7 +37,7 @@ async def main():
     if not self_managed_docs_path.exists():
         raise FileNotFoundError(f"Could not find {self_managed_docs_path}")
 
-    with open(self_managed_docs_path, "r", encoding="utf-8") as f:
+    with open(self_managed_docs_path, encoding="utf-8") as f:
         self_managed_docs_content = f.read()
 
     # 6) Add the self-managed .md content to cognee
@@ -51,7 +48,7 @@ async def main():
     if not docker_docs_path.exists():
         raise FileNotFoundError(f"Could not find {docker_docs_path}")
 
-    with open(docker_docs_path, "r", encoding="utf-8") as f:
+    with open(docker_docs_path, encoding="utf-8") as f:
         docker_docs_content = f.read()
 
     # 8) Add the general .md content to cognee

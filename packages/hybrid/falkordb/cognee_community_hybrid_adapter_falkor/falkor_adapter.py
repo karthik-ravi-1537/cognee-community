@@ -1,31 +1,30 @@
 import asyncio
-
 import json
 from textwrap import dedent
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
-from typing import List, Dict, Any, Optional, Tuple, Type, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from cognee.infrastructure.databases.vector.vector_db_interface import (
-        VectorDBInterface,
-    )
     from cognee.infrastructure.databases.graph.graph_db_interface import (
         GraphDBInterface,
     )
-
-from falkordb.falkordb import FalkorDB
+    from cognee.infrastructure.databases.vector.vector_db_interface import (
+        VectorDBInterface,
+    )
 
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.graph.graph_db_interface import (
-    record_graph_changes,
-    NodeData,
     EdgeData,
     Node,
+    NodeData,
+    record_graph_changes,
 )
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
 from cognee.infrastructure.engine import DataPoint
+
+from falkordb.falkordb import FalkorDB
 from falkordb.graph import Graph, QueryResult
 
 
@@ -97,7 +96,7 @@ class FalkorDBAdapter:
         self.graph_name = "cognee_graph"
 
     # TODO: This should return a list of results, not a single result
-    def query(self, query: str, params: dict = {}) -> QueryResult:
+    def query(self, query: str, params: dict = None) -> QueryResult:
         """
         Execute a query against the graph database.
 
@@ -117,6 +116,8 @@ class FalkorDBAdapter:
 
             The result of the query execution, returned by the graph database.
         """
+        if params is None:
+            params = {}
         graph = self.driver.select_graph(self.graph_name)
 
         try:
@@ -205,7 +206,7 @@ class FalkorDBAdapter:
 
     async def create_data_point_query(
         self, data_point: DataPoint, vectorized_values: dict
-    ) -> Tuple[str, dict]:
+    ) -> tuple[str, dict]:
         """
         Compose a query to create or update a data point in the database.
 
@@ -459,7 +460,7 @@ class FalkorDBAdapter:
         """
         pass
 
-    async def add_node(self, node_id: str, properties: Dict[str, Any]) -> None:
+    async def add_node(self, node_id: str, properties: dict[str, Any]) -> None:
         """
         Add a single node with specified properties to the graph.
 
@@ -512,7 +513,7 @@ class FalkorDBAdapter:
         await self.create_data_points(nodes)
 
     @record_graph_changes  # type: ignore # TODO: Fix record_graph_changes
-    async def add_nodes(self, nodes: Union[List[Node], List[DataPoint]]) -> None:
+    async def add_nodes(self, nodes: list[Node] | list[DataPoint]) -> None:
         """
         Add multiple nodes to the graph in a single operation.
 
@@ -539,7 +540,7 @@ class FalkorDBAdapter:
         source_id: str,
         target_id: str,
         relationship_name: str,
-        properties: Optional[Dict[str, Any]] = None,
+        properties: dict[str, Any] | None = None,
     ) -> None:
         """
         Create a new edge between two nodes in the graph.
@@ -562,7 +563,7 @@ class FalkorDBAdapter:
         self.query(query)
 
     @record_graph_changes  # type: ignore # TODO: Fix record_graph_changes
-    async def add_edges(self, edges: List[EdgeData]) -> None:
+    async def add_edges(self, edges: list[EdgeData]) -> None:
         """
         Add multiple edges to the graph in a single operation.
 
@@ -581,7 +582,7 @@ class FalkorDBAdapter:
                     f"Invalid edge format: {edge}. Expected tuple (source_id, target_id, relationship_name, properties)."
                 )
 
-    async def has_edges(self, edges: List[EdgeData]) -> List[EdgeData]:
+    async def has_edges(self, edges: list[EdgeData]) -> list[EdgeData]:
         """
         Check if the specified edges exist in the graph based on their attributes.
 
@@ -821,7 +822,7 @@ class FalkorDBAdapter:
         )
         return results
 
-    async def get_graph_data(self) -> Tuple:
+    async def get_graph_data(self) -> tuple:
         """
         Retrieve all nodes and edges from the graph along with their properties.
 
@@ -897,7 +898,7 @@ class FalkorDBAdapter:
         query = f"MATCH (node {{id: '{node_id}'}}) DETACH DELETE node"
         self.query(query)
 
-    async def delete_nodes(self, node_ids: List[str]) -> None:
+    async def delete_nodes(self, node_ids: list[str]) -> None:
         """
         Delete multiple nodes from the graph by their identifiers.
 
@@ -925,7 +926,7 @@ class FalkorDBAdapter:
         except Exception as e:
             print(f"Error deleting graph: {e}")
 
-    async def get_node(self, node_id: str) -> Optional[NodeData]:
+    async def get_node(self, node_id: str) -> NodeData | None:
         """
         Retrieve a single node from the graph using its ID.
 
@@ -944,7 +945,7 @@ class FalkorDBAdapter:
             return result.result_set[0][0].properties
         return None
 
-    async def get_nodes(self, node_ids: List[str]) -> List[NodeData]:
+    async def get_nodes(self, node_ids: list[str]) -> list[NodeData]:
         """
         Retrieve multiple nodes from the graph using their IDs.
 
@@ -965,7 +966,7 @@ class FalkorDBAdapter:
                 nodes.append(record[0].properties)
         return nodes
 
-    async def get_neighbors(self, node_id: str) -> List[NodeData]:
+    async def get_neighbors(self, node_id: str) -> list[NodeData]:
         """
         Get all neighboring nodes connected to the specified node.
 
@@ -986,7 +987,7 @@ class FalkorDBAdapter:
                 neighbors.append(record[0].properties)
         return neighbors
 
-    async def get_edges(self, node_id: str) -> List[EdgeData]:
+    async def get_edges(self, node_id: str) -> list[EdgeData]:
         """
         Retrieve all edges that are connected to the specified node.
 
@@ -997,8 +998,8 @@ class FalkorDBAdapter:
         """
         result = self.query(
             """
-            MATCH (n)-[r]-(m) 
-            WHERE n.id = $node_id 
+            MATCH (n)-[r]-(m)
+            WHERE n.id = $node_id
             RETURN n.id AS source_id, m.id AS target_id, type(r) AS relationship_name, properties(r) AS properties
             """,
             {"node_id": node_id},
@@ -1035,7 +1036,7 @@ class FalkorDBAdapter:
         result = self.query(
             f"""
             MATCH (source)-[r:{sanitized_relationship}]->(target)
-            WHERE source.id = $source_id AND target.id = $target_id 
+            WHERE source.id = $source_id AND target.id = $target_id
             AND (r.relationship_name = $relationship_name OR NOT EXISTS(r.relationship_name))
             RETURN COUNT(r) > 0 AS edge_exists
             """,
@@ -1051,7 +1052,7 @@ class FalkorDBAdapter:
             return result.result_set[0][0]  # type: ignore
         return False
 
-    async def get_graph_metrics(self, include_optional: bool = False) -> Dict[str, Any]:
+    async def get_graph_metrics(self, include_optional: bool = False) -> dict[str, Any]:
         """
         Fetch metrics and statistics of the graph, possibly including optional details.
 
@@ -1114,7 +1115,7 @@ class FalkorDBAdapter:
         OPTIONAL MATCH (d)<-[:CHUNK_OF]-(c)
         OPTIONAL MATCH (c)-[:HAS_ENTITY]->(e)
         OPTIONAL MATCH (e)-[:IS_INSTANCE_OF]->(et)
-        RETURN d AS document, 
+        RETURN d AS document,
                COLLECT(DISTINCT c) AS chunks,
                COLLECT(DISTINCT e) AS orphan_entities,
                COLLECT(DISTINCT c) AS made_from_nodes,
@@ -1162,8 +1163,8 @@ class FalkorDBAdapter:
         return [record[0] for record in result.result_set] if result.result_set else []
 
     async def get_nodeset_subgraph(
-        self, node_type: Type[Any], node_name: List[str]
-    ) -> Tuple[List[Tuple[int, dict]], List[Tuple[int, int, str, dict]]]:
+        self, node_type: type[Any], node_name: list[str]
+    ) -> tuple[list[tuple[int, dict]], list[tuple[int, int, str, dict]]]:
         """
         Fetch a subgraph consisting of a specific set of nodes and their relationships.
 

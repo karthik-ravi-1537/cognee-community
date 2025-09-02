@@ -1,17 +1,17 @@
-from datetime import datetime, timezone
-import os
-import json
 import asyncio
-
-from cognee.infrastructure.databases.exceptions.exceptions import (
-    NodesetFilterNotSupportedError,
-)
-from cognee.shared.logging_utils import get_logger
-from typing import Dict, Any, List, Union, Type, Tuple
+import json
+import os
+from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID
+
 import aiofiles
 import aiofiles.os as aiofiles_os
 import networkx as nx
+import numpy as np
+from cognee.infrastructure.databases.exceptions.exceptions import (
+    NodesetFilterNotSupportedError,
+)
 from cognee.infrastructure.databases.graph.graph_db_interface import (
     GraphDBInterface,
     record_graph_changes,
@@ -19,7 +19,7 @@ from cognee.infrastructure.databases.graph.graph_db_interface import (
 from cognee.infrastructure.engine import DataPoint
 from cognee.infrastructure.engine.utils import parse_id
 from cognee.modules.storage.utils import JSONEncoder
-import numpy as np
+from cognee.shared.logging_utils import get_logger
 
 logger = get_logger()
 
@@ -184,7 +184,7 @@ class NetworkXAdapter(GraphDBInterface):
         from_node: str,
         to_node: str,
         relationship_name: str,
-        edge_properties: Dict[str, Any] = {},
+        edge_properties: dict[str, Any] = None,
     ) -> None:
         """
         Add a single edge to the graph and persist the graph state to the file.
@@ -198,7 +198,9 @@ class NetworkXAdapter(GraphDBInterface):
             - edge_properties (Dict[str, Any]): Additional properties for the edge, if any.
               (default {})
         """
-        edge_properties["updated_at"] = datetime.now(timezone.utc)
+        if edge_properties is None:
+            edge_properties = {}
+        edge_properties["updated_at"] = datetime.now(UTC)
         self.graph.add_edge(
             from_node,
             to_node,
@@ -249,7 +251,7 @@ class NetworkXAdapter(GraphDBInterface):
                     relationship_name,
                     {
                         **(edge[3] if len(edge) == 4 else {}),
-                        "updated_at": datetime.now(timezone.utc),
+                        "updated_at": datetime.now(UTC),
                     },
                 )
                 processed_edges.append(processed_edge)
@@ -306,7 +308,7 @@ class NetworkXAdapter(GraphDBInterface):
         else:
             logger.error(f"Node {node_id} not found in graph")
 
-    async def delete_nodes(self, node_ids: List[UUID]) -> None:
+    async def delete_nodes(self, node_ids: list[UUID]) -> None:
         """
         Bulk delete nodes from the graph and persist the changes.
 
@@ -318,7 +320,7 @@ class NetworkXAdapter(GraphDBInterface):
         self.graph.remove_nodes_from(node_ids)
         await self.save_graph_to_file(self.filename)
 
-    async def get_disconnected_nodes(self) -> List[str]:
+    async def get_disconnected_nodes(self) -> list[str]:
         """
         Identify nodes that are not connected to any other nodes in the graph.
 
@@ -357,7 +359,7 @@ class NetworkXAdapter(GraphDBInterface):
 
         return None
 
-    async def extract_nodes(self, node_ids: List[UUID]) -> List[dict]:
+    async def extract_nodes(self, node_ids: list[UUID]) -> list[dict]:
         """
         Retrieve data for multiple nodes based on their identifiers.
 
@@ -605,7 +607,7 @@ class NetworkXAdapter(GraphDBInterface):
             file_path = self.filename
         try:
             if os.path.exists(file_path):
-                async with aiofiles.open(file_path, "r") as file:
+                async with aiofiles.open(file_path) as file:
                     graph_data = json.loads(await file.read())
                     for node in graph_data["nodes"]:
                         try:
@@ -621,7 +623,7 @@ class NetworkXAdapter(GraphDBInterface):
 
                         if isinstance(node.get("updated_at"), int):
                             node["updated_at"] = datetime.fromtimestamp(
-                                node["updated_at"] / 1000, tz=timezone.utc
+                                node["updated_at"] / 1000, tz=UTC
                             )
                         elif isinstance(node.get("updated_at"), str):
                             node["updated_at"] = datetime.strptime(
@@ -652,7 +654,7 @@ class NetworkXAdapter(GraphDBInterface):
                             edge.get("updated_at"), int
                         ):  # Handle timestamp in milliseconds
                             edge["updated_at"] = datetime.fromtimestamp(
-                                edge["updated_at"] / 1000, tz=timezone.utc
+                                edge["updated_at"] / 1000, tz=UTC
                             )
                         elif isinstance(edge.get("updated_at"), str):
                             edge["updated_at"] = datetime.strptime(
@@ -698,8 +700,8 @@ class NetworkXAdapter(GraphDBInterface):
             raise error
 
     async def get_nodeset_subgraph(
-        self, node_type: Type[Any], node_name: List[str]
-    ) -> Tuple[List[Tuple[int, dict]], List[Tuple[int, int, str, dict]]]:
+        self, node_type: type[Any], node_name: list[str]
+    ) -> tuple[list[tuple[int, dict]], list[tuple[int, int, str, dict]]]:
         """
         Obtain a subgraph based on specific node types and names. Not supported in this
         implementation.
@@ -713,7 +715,7 @@ class NetworkXAdapter(GraphDBInterface):
         raise NodesetFilterNotSupportedError
 
     async def get_filtered_graph_data(
-        self, attribute_filters: List[Dict[str, List[Union[str, int]]]]
+        self, attribute_filters: list[dict[str, list[str | int]]]
     ):
         """
         Fetch nodes and relationships filtered by specified attributes.
@@ -1012,7 +1014,7 @@ class NetworkXAdapter(GraphDBInterface):
             return self.graph.nodes[node_id]
         return None
 
-    async def get_nodes(self, node_ids: List[UUID] = None) -> List[dict]:
+    async def get_nodes(self, node_ids: list[UUID] = None) -> list[dict]:
         """
         Retrieve data for multiple nodes by their identifiers, or all nodes if no identifiers
         are provided.

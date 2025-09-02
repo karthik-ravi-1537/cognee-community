@@ -1,8 +1,10 @@
+from collections.abc import Callable
 from importlib import import_module
-from typing import Callable, Any
+from typing import Any
+
+from cognee.base_config import get_base_config
 
 from .keywordsai_adapter import get_keywordsai_observe
-from cognee.base_config import get_base_config
 
 get_observe_mod = import_module("cognee.modules.observability.get_observe")
 _orig_get_observe: Callable[..., Any] = get_observe_mod.get_observe  # save

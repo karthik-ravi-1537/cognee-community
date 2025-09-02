@@ -1,9 +1,8 @@
-import os
 import asyncio
 import pathlib
-from cognee.shared.logging_utils import get_logger, ERROR
 
 import cognee
+from cognee.shared.logging_utils import ERROR, get_logger
 
 
 async def main():
@@ -26,13 +25,13 @@ async def main():
     hackernews_api_docs_path = current_dir / "hackernews_api_docs.md"
     extra_docs_path = current_dir / "extra_docs.md"
 
-    with open(dlt_docs_path, "r", encoding="utf-8") as f:
+    with open(dlt_docs_path, encoding="utf-8") as f:
         dlt_docs_content = f.read()
 
-    with open(hackernews_api_docs_path, "r", encoding="utf-8") as f:
+    with open(hackernews_api_docs_path, encoding="utf-8") as f:
         hackernews_api_docs_content = f.read()
 
-    with open(extra_docs_path, "r", encoding="utf-8") as f:
+    with open(extra_docs_path, encoding="utf-8") as f:
         extra_docs_content = f.read()
 
     # 4) Add the .md content to cognee

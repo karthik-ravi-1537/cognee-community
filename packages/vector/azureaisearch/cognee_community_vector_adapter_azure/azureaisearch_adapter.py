@@ -1,35 +1,34 @@
 import asyncio
-from typing import Dict, List, Optional
+
+from azure.core.credentials import AzureKeyCredential
+from azure.core.exceptions import ResourceNotFoundError
 from azure.search.documents import SearchClient
 from azure.search.documents.aio import SearchClient as AsyncSearchClient
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    SearchIndex,
+    HnswAlgorithmConfiguration,
+    SearchableField,
     SearchField,
     SearchFieldDataType,
-    VectorSearch,
-    HnswAlgorithmConfiguration,
-    VectorSearchProfile,
-    SearchableField,
+    SearchIndex,
     SimpleField,
+    VectorSearch,
+    VectorSearchProfile,
 )
 from azure.search.documents.models import VectorizedQuery
-from azure.core.credentials import AzureKeyCredential
-from azure.core.exceptions import ResourceNotFoundError
-
-from cognee.shared.logging_utils import get_logger
-from cognee.infrastructure.engine import DataPoint
-from cognee.infrastructure.engine.utils import parse_id
-from cognee.modules.storage.utils import get_own_properties
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector import VectorDBInterface
-from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
 from cognee.infrastructure.databases.vector.exceptions import (
     CollectionNotFoundError,
 )
+from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
+from cognee.infrastructure.engine import DataPoint
+from cognee.infrastructure.engine.utils import parse_id
+from cognee.modules.storage.utils import get_own_properties
+from cognee.shared.logging_utils import get_logger
 
 logger = get_logger("AzureAISearchAdapter")
 
@@ -49,10 +48,10 @@ class AzureAISearchAdapter(VectorDBInterface):
 
     def __init__(
         self,
-        url: Optional[str] = None,
-        api_key: Optional[str] = None,
+        url: str | None = None,
+        api_key: str | None = None,
         embedding_engine: EmbeddingEngine = None,
-        endpoint: Optional[str] = None,
+        endpoint: str | None = None,
         **kwargs,  # Accept additional keyword arguments
     ):
         # Handle both 'url' and 'endpoint' parameters
@@ -117,7 +116,7 @@ class AzureAISearchAdapter(VectorDBInterface):
             credential=self.credential,
         )
 
-    async def embed_data(self, data: List[str]) -> List[List[float]]:
+    async def embed_data(self, data: list[str]) -> list[list[float]]:
         return await self.embedding_engine.embed_text(data)
 
     async def has_collection(self, collection_name: str) -> bool:
@@ -197,7 +196,7 @@ class AzureAISearchAdapter(VectorDBInterface):
 
             self.index_client.create_or_update_index(index)
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]):
+    async def create_data_points(self, collection_name: str, data_points: list[DataPoint]):
         """Upload data points to the search index."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
@@ -236,7 +235,7 @@ class AzureAISearchAdapter(VectorDBInterface):
                 for doc in failed_docs:
                     logger.error(f"Document {doc.key} failed: {doc.error_message}")
 
-    async def retrieve(self, collection_name: str, data_point_ids: List[str]) -> List[ScoredResult]:
+    async def retrieve(self, collection_name: str, data_point_ids: list[str]) -> list[ScoredResult]:
         """Retrieve documents by their IDs."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
@@ -285,12 +284,12 @@ class AzureAISearchAdapter(VectorDBInterface):
     async def search(
         self,
         collection_name: str,
-        query_text: Optional[str] = None,
-        query_vector: Optional[List[float]] = None,
+        query_text: str | None = None,
+        query_vector: list[float] | None = None,
         limit: int = 15,
         with_vector: bool = False,
         normalized: bool = True,
-    ) -> List[ScoredResult]:
+    ) -> list[ScoredResult]:
         """Perform vector or hybrid search."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
@@ -372,10 +371,10 @@ class AzureAISearchAdapter(VectorDBInterface):
     async def batch_search(
         self,
         collection_name: str,
-        query_texts: List[str],
+        query_texts: list[str],
         limit: int = None,
         with_vectors: bool = False,
-    ) -> List[List[ScoredResult]]:
+    ) -> list[list[ScoredResult]]:
         """Perform batch vector search."""
         query_vectors = await self.embed_data(query_texts)
 
@@ -398,7 +397,7 @@ class AzureAISearchAdapter(VectorDBInterface):
 
         return results
 
-    async def delete_data_points(self, collection_name: str, data_point_ids: List[str]):
+    async def delete_data_points(self, collection_name: str, data_point_ids: list[str]):
         """Delete documents by their IDs."""
         sanitized_name = self._sanitize_index_name(collection_name)
 
@@ -423,7 +422,7 @@ class AzureAISearchAdapter(VectorDBInterface):
         await self.create_collection(f"{index_name}_{index_property_name}")
 
     async def index_data_points(
-        self, index_name: str, index_property_name: str, data_points: List[DataPoint]
+        self, index_name: str, index_property_name: str, data_points: list[DataPoint]
     ):
         """Index data points for a specific property."""
         await self.create_data_points(

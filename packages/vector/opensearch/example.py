@@ -1,5 +1,5 @@
-import os
 import asyncio
+import os
 import pathlib
 from os import path
 
@@ -8,10 +8,9 @@ os.environ["LLM_API_KEY"] = ""
 
 
 async def main():
-    from cognee import config, prune, add, cognify, search, SearchType
+    from cognee import SearchType, add, cognify, config, prune, search
 
     # NOTE: Importing the register module we let cognee know it can use the azure vector adapter
-    from cognee_community_vector_adapter_opensearch import register
 
     system_path = pathlib.Path(__file__).parent
     config.system_root_directory(path.join(system_path, ".cognee-system"))

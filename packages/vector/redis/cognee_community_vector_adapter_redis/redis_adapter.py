@@ -1,23 +1,22 @@
-import json
 import asyncio
-from typing import Dict, List, Optional, Any
+import json
+from typing import Any
 from uuid import UUID
 
-from redisvl.index import AsyncSearchIndex
-from redisvl.schema import IndexSchema
-from redisvl.query import VectorQuery
-# from redisvl.query import VectorDistanceMetric
-
-from cognee.shared.logging_utils import get_logger
-
-from cognee.infrastructure.engine import DataPoint
-from cognee.infrastructure.engine.utils import parse_id
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector import VectorDBInterface
-from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
+from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
+from cognee.infrastructure.engine import DataPoint
+from cognee.infrastructure.engine.utils import parse_id
+
+# from redisvl.query import VectorDistanceMetric
+from cognee.shared.logging_utils import get_logger
+from redisvl.index import AsyncSearchIndex
+from redisvl.query import VectorQuery
+from redisvl.schema import IndexSchema
 
 logger = get_logger("RedisAdapter")
 
@@ -73,15 +72,15 @@ class RedisAdapter(VectorDBInterface):
     """
 
     name = "Redis"
-    url: Optional[str]
-    api_key: Optional[str] = None
-    embedding_engine: Optional[EmbeddingEngine] = None
+    url: str | None
+    api_key: str | None = None
+    embedding_engine: EmbeddingEngine | None = None
 
     def __init__(
         self,
         url: str,
-        api_key: Optional[str] = None,
-        embedding_engine: Optional[EmbeddingEngine] = None,
+        api_key: str | None = None,
+        embedding_engine: EmbeddingEngine | None = None,
     ) -> None:
         """Initialize the Redis adapter.
 
@@ -103,7 +102,7 @@ class RedisAdapter(VectorDBInterface):
         self._indices = {}
         self.VECTOR_DB_LOCK = asyncio.Lock()
 
-    async def embed_data(self, data: List[str]) -> List[List[float]]:
+    async def embed_data(self, data: list[str]) -> list[list[float]]:
         """Embed text data using the embedding engine.
 
         Args:
@@ -187,7 +186,7 @@ class RedisAdapter(VectorDBInterface):
     async def create_collection(
         self,
         collection_name: str,
-        payload_schema: Optional[Any] = None,
+        payload_schema: Any | None = None,
     ) -> None:
         """Create a new collection (Redis index) with vector search capabilities.
 
@@ -216,7 +215,7 @@ class RedisAdapter(VectorDBInterface):
             finally:
                 await index.disconnect()
 
-    async def create_data_points(self, collection_name: str, data_points: List[DataPoint]) -> None:
+    async def create_data_points(self, collection_name: str, data_points: list[DataPoint]) -> None:
         """Create data points in the collection.
 
         Args:
@@ -239,7 +238,7 @@ class RedisAdapter(VectorDBInterface):
 
             # Prepare documents for RedisVL
             documents = []
-            for data_point, embedding in zip(data_points, data_vectors):
+            for data_point, embedding in zip(data_points, data_vectors, strict=False):
                 # Serialize the payload to handle UUIDs and other non-JSON types
                 payload = serialize_for_json(data_point.model_dump())
 
@@ -297,8 +296,8 @@ class RedisAdapter(VectorDBInterface):
         )
 
     async def retrieve(
-        self, collection_name: str, data_point_ids: List[str]
-    ) -> List[Dict[str, Any]]:
+        self, collection_name: str, data_point_ids: list[str]
+    ) -> list[dict[str, Any]]:
         """Retrieve data points by their IDs.
 
         Args:
@@ -335,11 +334,11 @@ class RedisAdapter(VectorDBInterface):
     async def search(
         self,
         collection_name: str,
-        query_text: Optional[str] = None,
-        query_vector: Optional[List[float]] = None,
+        query_text: str | None = None,
+        query_vector: list[float] | None = None,
         limit: int = 15,
         with_vector: bool = False,
-    ) -> List[ScoredResult]:
+    ) -> list[ScoredResult]:
         """Search for similar vectors in the collection.
 
         Args:
@@ -425,10 +424,10 @@ class RedisAdapter(VectorDBInterface):
     async def batch_search(
         self,
         collection_name: str,
-        query_texts: List[str],
-        limit: Optional[int] = None,
+        query_texts: list[str],
+        limit: int | None = None,
         with_vectors: bool = False,
-    ) -> List[List[ScoredResult]]:
+    ) -> list[list[ScoredResult]]:
         """Perform batch search for multiple queries.
 
         Args:
@@ -463,8 +462,8 @@ class RedisAdapter(VectorDBInterface):
         ]
 
     async def delete_data_points(
-        self, collection_name: str, data_point_ids: List[str]
-    ) -> Dict[str, int]:
+        self, collection_name: str, data_point_ids: list[str]
+    ) -> dict[str, int]:
         """Delete data points by their IDs.
 
         Args:

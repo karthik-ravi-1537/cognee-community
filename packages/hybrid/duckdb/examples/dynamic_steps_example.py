@@ -1,9 +1,8 @@
 import asyncio
-import os
 
 import cognee
 from cognee.api.v1.search import SearchType
-from cognee.shared.logging_utils import setup_logging, ERROR
+from cognee.shared.logging_utils import ERROR, setup_logging
 
 job_1 = """
 CV 1: Relevant
@@ -162,7 +161,6 @@ Negotiation and Relationship Building
 
 
 async def main(enable_steps: dict[str, bool]) -> None:
-    from cognee_community_hybrid_adapter_duckdb import register
 
     # Please provide your Milvus instance url or local path
     cognee.config.set_vector_db_config(

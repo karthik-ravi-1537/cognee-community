@@ -1,16 +1,16 @@
+import asyncio
+import json
+import os
+from typing import Any
+
 import cognee_community_observability_keywordsai  # noqa: F401  (patches Cognee)
-
-import os, json, asyncio
-from typing import List, Any
-
 from cognee import prune, visualize_graph
-from cognee.low_level import setup, DataPoint
+from cognee.low_level import DataPoint, setup
 from cognee.modules.data.methods import load_or_create_datasets
-from cognee.modules.users.methods import get_default_user
-from cognee.pipelines import run_tasks, Task
-from cognee.tasks.storage import add_data_points as _add_data_points
-
 from cognee.modules.observability.get_observe import get_observe
+from cognee.modules.users.methods import get_default_user
+from cognee.pipelines import Task, run_tasks
+from cognee.tasks.storage import add_data_points as _add_data_points
 
 observe = get_observe()
 
@@ -40,7 +40,7 @@ class Company(DataPoint):
 
 # ---------- Task: build DataPoints ---------- #
 @observe  # task span
-def ingest_files(data: List[Any]):
+def ingest_files(data: list[Any]):
     people_dp, dept_dp, company_dp = {}, {}, {}
     for item in data:
         people, companies = item["people"], item["companies"]

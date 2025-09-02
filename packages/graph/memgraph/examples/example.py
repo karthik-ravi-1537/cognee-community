@@ -1,12 +1,14 @@
 """Example usage of the Memgraph community adapter for Cognee."""
 
 import asyncio
+import os
+import pathlib
+import pprint
+
 import cognee
 from cognee.infrastructure.databases.graph import get_graph_engine
+
 from cognee_community_graph_adapter_memgraph import register
-import pathlib
-import os
-import pprint
 
 
 async def main():
