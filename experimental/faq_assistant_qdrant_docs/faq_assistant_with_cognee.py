@@ -7,7 +7,6 @@ import cognee
 
 
 async def main():
-
     current_dir = pathlib.Path(__file__).parent
     data_directory_path = str(current_dir / "data_storage")
     cognee.config.data_root_directory(data_directory_path)
@@ -35,7 +34,6 @@ async def main():
 
     # 5) "Cognify" the data to build out the knowledge graph
     await cognee.cognify([dataset_name])
-
 
 
 if __name__ == "__main__":

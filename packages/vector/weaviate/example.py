@@ -25,9 +25,7 @@ async def main():
                 "WEAVIATE_API_URL",
                 "",
             ),
-            "vector_db_key": os.getenv(
-                "WEAVIATE_API_KEY", ""
-            ),
+            "vector_db_key": os.getenv("WEAVIATE_API_KEY", ""),
         }
     )
     config.set_graph_db_config(

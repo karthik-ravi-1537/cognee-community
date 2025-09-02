@@ -6,6 +6,7 @@ from cognee.modules.search.types import SearchType
 from cognee.modules.engine.models import NodeSet
 from openai import OpenAI
 
+
 async def main():
     # Configure cognee directories to match the setup from docs_intelligence_cognee.py
     current_dir = pathlib.Path(__file__).parent
@@ -19,18 +20,20 @@ async def main():
 
     # Graph completion with NodeSet filtering
     graph_completion_node_set_answer = await cognee.search(
-        query_type=SearchType.GRAPH_COMPLETION, 
-        query_text=query_text, 
+        query_type=SearchType.GRAPH_COMPLETION,
+        query_text=query_text,
         node_type=NodeSet,
         node_name=["Aura_NodeSet"],
     )
-    print("\nGraph completion answer with NodeSet filtering: (We expect to see no subtopics found)")
+    print(
+        "\nGraph completion answer with NodeSet filtering: (We expect to see no subtopics found)"
+    )
     for result in graph_completion_node_set_answer:
         print(f"- {result}")
 
     # Graph completion
     graph_completion_answer = await cognee.search(
-        query_type=SearchType.GRAPH_COMPLETION, 
+        query_type=SearchType.GRAPH_COMPLETION,
         query_text=query_text,
         top_k=15,
     )
@@ -49,12 +52,9 @@ async def main():
     # OpenAI completion
     os.environ["OPENAI_API_KEY"] = os.environ["LLM_API_KEY"]
     client = OpenAI()
-    
-    llm_response = client.responses.create(
-        model="gpt-4o-mini",
-        input=query_text
-    )
-    
+
+    llm_response = client.responses.create(model="gpt-4o-mini", input=query_text)
+
     print("\nOpenAI response:")
     print(llm_response.output_text)
 

@@ -156,9 +156,10 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             return result is not None
         except Exception:
             return False
- 
-    async def create_collection(self, collection_name: str, vector_dimension: int = 3072) -> None:
 
+    async def create_collection(
+        self, collection_name: str, vector_dimension: int = 3072
+    ) -> None:
         """[VECTOR] Create a new collection (table) in DuckDB."""
         # Create a table for storing vector data with specified dimension
         vector_dimension = self.embedding_engine.get_vector_size()
@@ -298,12 +299,10 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         from cognee.infrastructure.engine.utils import parse_id
 
         if query_text is None and query_vector is None:
-
             raise MissingQueryParameterError()
 
         if limit <= 0:
             limit = 15
-
 
         if not await self.has_collection(collection_name):
             logger.warning(
@@ -311,7 +310,6 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             )
             return []
 
-        
         if limit == 0:
             search_query = f"""select count(*) from {collection_name}"""
             count = await self._execute_query_one(search_query)
@@ -319,11 +317,10 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
                 logger.warning(f"Count is None in DuckDBAdapter.search; returning [].")
                 return []
             limit = count[0]
-        
+
         if limit == 0:
             logger.warning(f"Limit is 0 in DuckDBAdapter.search; returning [].")
             return []
-
 
         try:
             # Get the query vector
@@ -332,14 +329,15 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
 
             # Ensure we have a query vector at this point
             if query_vector is None:
-
                 raise MissingQueryParameterError()
-     
+
             # Use DuckDB's native array_distance function for efficient vector search
             # Convert query vector to DuckDB array format with proper dimension
             vector_dimension = self.embedding_engine.get_vector_size()
-            vector_str = f"[{','.join(map(str, query_vector))}]::FLOAT[{vector_dimension}]"
-            
+            vector_str = (
+                f"[{','.join(map(str, query_vector))}]::FLOAT[{vector_dimension}]"
+            )
+
             # Execute vector similarity search using cosine similarity
 
             search_query = f"""

@@ -13,7 +13,6 @@ node_set_docker = ["Docker_NodeSet", "Self-managed_NodeSet"]
 
 
 async def main():
-
     current_dir = pathlib.Path(__file__).parent
     data_directory_path = str(current_dir / "data_storage")
     cognee.config.data_root_directory(data_directory_path)
@@ -24,7 +23,6 @@ async def main():
     # 1) Clean slate
     await cognee.prune.prune_data()
     await cognee.prune.prune_system(metadata=True)
-
 
     # 3) Load the aura .md file
     aura_docs_path = current_dir / "neo4j_docs_aura.md"  # Adjust if needed
@@ -38,7 +36,9 @@ async def main():
     await cognee.add([aura_docs_content], node_set=node_set_aura)
 
     # 5) Load the self-managed .md file
-    self_managed_docs_path = current_dir / "neo4j_docs_operations_manual.md"  # Adjust if needed
+    self_managed_docs_path = (
+        current_dir / "neo4j_docs_operations_manual.md"
+    )  # Adjust if needed
     if not self_managed_docs_path.exists():
         raise FileNotFoundError(f"Could not find {self_managed_docs_path}")
 
@@ -49,7 +49,9 @@ async def main():
     await cognee.add([self_managed_docs_content], node_set=node_set_self_managed)
 
     # 7) Load the modelling designs .md file
-    docker_docs_path = current_dir / "neo4j_docs_operations_manual_docker.md"  # Adjust if needed
+    docker_docs_path = (
+        current_dir / "neo4j_docs_operations_manual_docker.md"
+    )  # Adjust if needed
     if not docker_docs_path.exists():
         raise FileNotFoundError(f"Could not find {docker_docs_path}")
 
@@ -65,7 +67,6 @@ async def main():
 
     # 9) "Cognify" the data to build out the knowledge graph
     await cognee.cognify(ontology_file_path=ontology_file_path)
-
 
 
 if __name__ == "__main__":

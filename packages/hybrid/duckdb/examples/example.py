@@ -17,7 +17,6 @@ async def main() -> None:
     config.system_root_directory(path.join(system_path, ".cognee_system"))
     config.data_root_directory(path.join(system_path, ".data_storage"))
 
-
     config.set_vector_db_config(
         {
             "vector_db_provider": "duckdb",
@@ -25,7 +24,6 @@ async def main() -> None:
             # "vector_db_port": 6379,
         }
     )
-
 
     await prune.prune_data()
     await prune.prune_system(metadata=True)

@@ -94,7 +94,7 @@ def scrape_specific_urls(urls: list, output_file: str):
 
     for url in urls:
         logger.info(f"Scraping: {url}")
-        
+
         try:
             markdown_data = scrape_markdown_with_firecrawl(url)
             # Append it with a "header" chunk
@@ -132,4 +132,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main() 
+    main()

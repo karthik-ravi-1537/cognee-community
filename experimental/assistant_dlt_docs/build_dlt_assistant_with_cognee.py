@@ -7,7 +7,6 @@ import cognee
 
 
 async def main():
-
     current_dir = pathlib.Path(__file__).parent
     data_directory_path = str(current_dir / "data_storage")
     cognee.config.data_root_directory(data_directory_path)
@@ -23,13 +22,13 @@ async def main():
     dataset_name = "dlt_docs_and_hackernews_api"
 
     # 3) Load the .md file
-    dlt_docs_path = current_dir / "docs_dlt_some_pages.md"  
+    dlt_docs_path = current_dir / "docs_dlt_some_pages.md"
     hackernews_api_docs_path = current_dir / "hackernews_api_docs.md"
     extra_docs_path = current_dir / "extra_docs.md"
 
     with open(dlt_docs_path, "r", encoding="utf-8") as f:
         dlt_docs_content = f.read()
-    
+
     with open(hackernews_api_docs_path, "r", encoding="utf-8") as f:
         hackernews_api_docs_content = f.read()
 
@@ -37,11 +36,13 @@ async def main():
         extra_docs_content = f.read()
 
     # 4) Add the .md content to cognee
-    await cognee.add([dlt_docs_content, hackernews_api_docs_content, extra_docs_content], dataset_name)    
+    await cognee.add(
+        [dlt_docs_content, hackernews_api_docs_content, extra_docs_content],
+        dataset_name,
+    )
 
     # 5) "Cognify" the data to build out the knowledge graph
     await cognee.cognify([dataset_name])
-
 
 
 if __name__ == "__main__":
