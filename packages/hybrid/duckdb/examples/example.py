@@ -17,9 +17,6 @@ async def main() -> None:
     config.system_root_directory(path.join(system_path, ".cognee_system"))
     config.data_root_directory(path.join(system_path, ".data_storage"))
 
-    # config.set_graph_db_config({
-    #     "graph_database_provider": "duckdb",
-    # })
 
     config.set_vector_db_config(
         {
@@ -29,11 +26,7 @@ async def main() -> None:
         }
     )
 
-    # Please provide your Falkor instance configuration
-    # config.set_graph_db_config({
-    #     "graph_database_url": "duckdb",
-    #     "graph_database_port": 6379,
-    # })
+
     await prune.prune_data()
     await prune.prune_system(metadata=True)
 
