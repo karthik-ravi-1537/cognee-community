@@ -312,7 +312,8 @@ class CogneeProcessor:
         # Configure graph database provider
         cognee.config.set_graph_db_config(
             {
-                "graph_database_provider": "networkx",  # You can change this to other providers like "kuzu", "neo4j", etc.
+                # You can change this to other providers like "kuzu", "neo4j", etc.
+                "graph_database_provider": "networkx",
             }
         )
         cognee.config.set_vector_db_config(
@@ -451,7 +452,8 @@ class CogneeProcessor:
             table.insert(pa_table)
 
             print(
-                f"✅ Successfully stored {len(records)} search results in Iceberg table: {namespace}.{table_name}"
+                f"✅ Successfully stored {len(records)} search results in Iceberg table:"
+                f"{namespace}.{table_name}"
             )
             return True
 

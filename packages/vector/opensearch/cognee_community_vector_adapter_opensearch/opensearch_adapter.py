@@ -335,8 +335,8 @@ class OpenSearchAdapter(VectorDBInterface):
             return results
         except NotFoundError as nfe:
             raise CollectionNotFoundError(f"Collection '{collection_name}' not found!") from nfe
-        finally:
-            await self._release()
+        # finally:
+        #     await self._release()
 
     async def batch_search(
         self,

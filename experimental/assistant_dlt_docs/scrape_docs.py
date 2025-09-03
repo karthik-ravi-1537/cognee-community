@@ -47,7 +47,8 @@ def scrape_markdown_with_firecrawl(url: str) -> str:
             # 408 => request timed out. Wait and retry
             if attempt < max_retries:
                 logger.warning(
-                    f"408 Timeout. Waiting {backoff_seconds}s before retry (attempt {attempt}/{max_retries})."
+                    f"408 Timeout. Waiting {backoff_seconds}s before retry"
+                    f"(attempt {attempt}/{max_retries})."
                 )
                 time.sleep(backoff_seconds)
                 continue
@@ -60,7 +61,8 @@ def scrape_markdown_with_firecrawl(url: str) -> str:
             # 429 => rate limit exceeded
             if attempt < max_retries:
                 logger.warning(
-                    f"429 Rate Limit. Waiting {backoff_seconds}s then retrying (attempt {attempt}/{max_retries})"
+                    f"429 Rate Limit. Waiting {backoff_seconds}s then retrying "
+                    f"(attempt {attempt}/{max_retries})"
                 )
                 time.sleep(backoff_seconds)
                 continue
@@ -70,7 +72,8 @@ def scrape_markdown_with_firecrawl(url: str) -> str:
             # 502 => Bad Gateway error
             if attempt < max_retries:
                 logger.warning(
-                    f"502 Bad Gateway. Waiting {backoff_seconds}s then retrying (attempt {attempt}/{max_retries})"
+                    f"502 Bad Gateway. Waiting {backoff_seconds}s then retrying "
+                    f"(attempt {attempt}/{max_retries})"
                 )
                 time.sleep(backoff_seconds)
                 continue

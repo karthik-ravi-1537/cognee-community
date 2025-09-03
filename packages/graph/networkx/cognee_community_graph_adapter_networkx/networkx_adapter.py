@@ -52,6 +52,7 @@ class NetworkXAdapter(GraphDBInterface):
         graph_database_password=None,
     ):
         self.filename = "cognee_graph.pkl"
+        self.graph = nx.MultiDiGraph()
         self.graph_database_url = graph_database_url
         self.graph_database_username = graph_database_username
         self.graph_database_password = graph_database_password

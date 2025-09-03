@@ -17,7 +17,10 @@ async def main():
     cognee_directory_path = str(current_dir / "cognee_system")
     cognee.config.system_root_directory(cognee_directory_path)
 
-    query_text = "give me the list of all the subtopics of docker? if there is no docker subtopic say 'no subtopics found'"
+    query_text = (
+        "give me the list of all the subtopics of docker? if there is no"
+        "docker subtopic say 'no subtopics found'"
+    )
 
     # Graph completion with NodeSet filtering
     graph_completion_node_set_answer = await cognee.search(
