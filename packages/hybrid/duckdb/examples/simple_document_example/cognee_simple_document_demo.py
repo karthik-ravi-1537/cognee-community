@@ -12,6 +12,10 @@ async def cognee_demo():
     # Get file path to document to process
     from pathlib import Path
 
+    # NOTE: Importing the register module we let cognee know it can use the DuckDB graph adapter
+    # NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
+    from cognee_community_hybrid_adapter_duckdb import register  # noqa: F401
+
     # Please provide your Milvus instance url or local path
     cognee.config.set_vector_db_config(
         {

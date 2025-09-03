@@ -17,7 +17,7 @@ def register():
         )
 
         supported_databases["memgraph"] = MemgraphAdapter
-    except ImportError:
+    except ImportError as ie:
         raise ImportError(
             "cognee is not installed. Please install it with: pip install cognee"
-        )
+        ) from ie

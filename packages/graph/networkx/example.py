@@ -3,12 +3,14 @@ import pathlib
 import sys
 from os import path
 
+# NOTE: Importing the register module we let cognee know it can use the networkx graph adapter
+# NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
+from cognee_community_graph_adapter_networkx import register  # noqa: F401
+
 ######### Needed only for this example, not to be used in production code.
 packages_module_path = path.join(pathlib.Path(__file__).parent.parent.parent.parent)
 sys.path.append(packages_module_path)
 #########
-
-# NOTE: Importing the register module we let cognee know it can use the Networkx adapter
 
 
 async def main():

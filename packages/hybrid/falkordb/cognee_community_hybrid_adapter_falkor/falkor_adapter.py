@@ -520,7 +520,8 @@ class FalkorDBAdapter:
         Parameters:
         -----------
 
-            - nodes (Union[List[Node], List[DataPoint]]): A list of Node tuples or DataPoint objects to be added to the graph.
+            - nodes (Union[List[Node], List[DataPoint]]): A list of Node tuples
+                                or DataPoint objects to be added to the graph.
         """
         for node in nodes:
             if isinstance(node, tuple) and len(node) == 2:
@@ -532,7 +533,8 @@ class FalkorDBAdapter:
                 await self.add_node(str(node.id), node.model_dump())
             else:
                 raise ValueError(
-                    f"Invalid node format: {node}. Expected tuple (node_id, properties) or DataPoint object."
+                    f"Invalid node format: {node}. Expected tuple (node_id, properties)"
+                    f"or DataPoint object."
                 )
 
     async def add_edge(
@@ -579,7 +581,8 @@ class FalkorDBAdapter:
                 await self.add_edge(source_id, target_id, relationship_name, properties)
             else:
                 raise ValueError(
-                    f"Invalid edge format: {edge}. Expected tuple (source_id, target_id, relationship_name, properties)."
+                    f"Invalid edge format: {edge}. Expected tuple (source_id, target_id,"
+                    f"relationship_name, properties)."
                 )
 
     async def has_edges(self, edges: list[EdgeData]) -> list[EdgeData]:
@@ -1000,7 +1003,8 @@ class FalkorDBAdapter:
             """
             MATCH (n)-[r]-(m)
             WHERE n.id = $node_id
-            RETURN n.id AS source_id, m.id AS target_id, type(r) AS relationship_name, properties(r) AS properties
+            RETURN n.id AS source_id, m.id AS target_id, type(r) AS relationship_name,
+            properties(r) AS properties
             """,
             {"node_id": node_id},
         )
@@ -1008,7 +1012,8 @@ class FalkorDBAdapter:
         edges = []
         if result.result_set:
             for record in result.result_set:
-                # FalkorDB returns values by index: source_id, target_id, relationship_name, properties
+                # FalkorDB returns values by index: source_id, target_id,
+                # relationship_name, properties
                 edges.append(
                     (
                         record[0],  # source_id
@@ -1128,7 +1133,8 @@ class FalkorDBAdapter:
             return {}
 
         # Convert result to dictionary format
-        # FalkorDB returns values by index: document, chunks, orphan_entities, made_from_nodes, orphan_types
+        # FalkorDB returns values by index: document, chunks, orphan_entities,
+        # made_from_nodes, orphan_types
         record = result.result_set[0]
         return {
             "document": record[0],
@@ -1226,14 +1232,16 @@ class FalkorDBAdapter:
         edges_query = """
         MATCH (a)-[r]->(b)
         WHERE a.id IN $ids AND b.id IN $ids
-        RETURN a.id AS source_id, b.id AS target_id, type(r) AS relationship_name, properties(r) AS properties
+        RETURN a.id AS source_id, b.id AS target_id, type(r) AS relationship_name,
+        properties(r) AS properties
         """
 
         edges_result = self.query(edges_query, {"ids": all_ids})
         edges = []
         if edges_result.result_set:
             for record in edges_result.result_set:
-                # FalkorDB returns values by index: source_id, target_id, relationship_name, properties
+                # FalkorDB returns values by index: source_id, target_id,
+                # relationship_name, properties
                 edges.append(
                     (
                         record[0],  # source_id

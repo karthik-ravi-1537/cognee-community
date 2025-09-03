@@ -11,6 +11,8 @@ async def main():
     from cognee import SearchType, add, cognify, config, prune, search
 
     # NOTE: Importing the register module we let cognee know it can use the Redis vector adapter
+    # NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
+    from cognee_community_vector_adapter_redis import register  # noqa: F401
 
     system_path = pathlib.Path(__file__).parent
     config.system_root_directory(path.join(system_path, ".cognee-system"))

@@ -50,6 +50,7 @@ class MilvusAdapter:
         self.api_key = api_key
         self.embedding_engine = embedding_engine
         self.VECTOR_DB_LOCK = asyncio.Lock()
+        self.client = None
 
     def get_milvus_client(self) -> MilvusClient:
         """
@@ -80,12 +81,13 @@ class MilvusAdapter:
 
                     asyncio.run(file_storage.ensure_directory_exists())
 
-        if self.api_key:
-            client = MilvusClient(uri=self.url, token=self.api_key)
-        else:
-            client = MilvusClient(uri=self.url)
+        if not self.client:
+            if self.api_key:
+                self.client = MilvusClient(uri=self.url, token=self.api_key)
+            else:
+                self.client = MilvusClient(uri=self.url)
 
-        return client
+        return self.client
 
     async def embed_data(self, data: list[str]) -> list[list[float]]:
         """
@@ -198,7 +200,7 @@ class MilvusAdapter:
             metadatas.append(data_point.metadata)
 
         try:
-            client.insert(
+            await client.insert(
                 collection_name=collection_name,
                 data={
                     "id": ids,
@@ -207,9 +209,11 @@ class MilvusAdapter:
                     "metadata": metadatas,
                 },
             )
+            client.flush(collection_name)
             logger.info(
                 f"Inserted {len(data_points)} data points into collection: {collection_name}"
             )
+            # print(f"Collection: {collection_name}")
         except Exception as e:
             logger.error(f"Error inserting data points into collection {collection_name}: {e}")
             raise
@@ -335,7 +339,8 @@ class MilvusAdapter:
             List[Dict[str, object]]: List of search results.
         """
 
-        # TODO: brute_force_search passes non-existent collections like FunctionDefinition_text. Redis handles similarly
+        # TODO: brute_force_search passes non-existent collections like FunctionDefinition_text.
+        # TODO: Redis handles similarly
         if not await self.has_collection(collection_name):
             logger.warning(f"Collection {collection_name} not found, returning empty results")
             return []
@@ -355,9 +360,9 @@ class MilvusAdapter:
 
         try:
             # Load the collection for search
-            # client.load_collection(collection_name)
+            client.load_collection(collection_name)
             # Validate limit parameter
-            # TODO: Make this limit value make more sense, like the size of the collection or something
+            # TODO: Make this limit value make more sense, like the size of the collection
             if limit <= 0:
                 limit = 10000
 

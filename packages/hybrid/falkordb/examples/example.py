@@ -10,7 +10,9 @@ os.environ.setdefault("LLM_API_KEY", "")
 async def main():
     from cognee import SearchType, add, cognify, config, prune, search
 
-    # NOTE: Importing the register module we let cognee know it can use the Falkor graph adapter
+    # NOTE: Importing the register module we let cognee know it can use the falkordb graph adapter
+    # NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
+    from cognee_community_hybrid_adapter_falkor import register  # noqa: F401
 
     system_path = pathlib.Path(__file__).parent
     config.system_root_directory(path.join(system_path, ".cognee_system"))

@@ -112,7 +112,6 @@ class OpenSearchAdapter(VectorDBInterface):
             self._users -= 1  # ← decrement
             if self._users == 0 and self.client:
                 await self.client.close()
-                self.client = None
 
     def _get_index_name(self, collection_name: str) -> str:
         """
@@ -334,8 +333,8 @@ class OpenSearchAdapter(VectorDBInterface):
                     )
                 )
             return results
-        except NotFoundError:
-            raise CollectionNotFoundError(f"Collection '{collection_name}' not found!")
+        except NotFoundError as nfe:
+            raise CollectionNotFoundError(f"Collection '{collection_name}' not found!") from nfe
         finally:
             await self._release()
 

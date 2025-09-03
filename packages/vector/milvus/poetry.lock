@@ -355,6 +355,24 @@ files = [
 ]
 
 [[package]]
+name = "baml-py"
+version = "0.201.0"
+description = "BAML python bindings (pyproject.toml)"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "baml_py-0.201.0-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:83228d2af2b0e845bbbb4e14f7cbd3376cec385aee01210ac522ab6076e07bec"},
+    {file = "baml_py-0.201.0-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:2a9d016139e3ae5b5ce98c7b05b5fbd53d5d38f04dc810ec4d70fb17dd6c10e4"},
+    {file = "baml_py-0.201.0-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b5058505b1a3c5f04fc1679aec4d730fa9bef2cbd96209b3ed50152f60b96baf"},
+    {file = "baml_py-0.201.0-cp38-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:36289d548581ba4accd5eaaab3246872542dd32dc6717e537654fa0cad884071"},
+    {file = "baml_py-0.201.0-cp38-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:5ab70e7bd6481d71edca8a33313347b29faccec78b9960138aa437522813ac9a"},
+    {file = "baml_py-0.201.0-cp38-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:7efc5c693a7142c230a4f3d6700415127fee0b9f5fdbb36db63e04e27ac4c0f1"},
+    {file = "baml_py-0.201.0-cp38-abi3-win_amd64.whl", hash = "sha256:56499857b7a27ae61a661c8ce0dddd0fb567a45c0b826157e44048a14cf586f9"},
+    {file = "baml_py-0.201.0-cp38-abi3-win_arm64.whl", hash = "sha256:1e52dc1151db84a302b746590fe2bc484bdd794f83fa5da7216d9394c559f33a"},
+]
+
+[[package]]
 name = "bcrypt"
 version = "4.3.0"
 description = "Modern password hashing for your software and your servers"
@@ -682,14 +700,14 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "cognee"
-version = "0.2.1"
+version = "0.2.4"
 description = "Cognee - is a library for enriching LLM context with a semantic layer for better understanding and reasoning."
 optional = false
 python-versions = "<=3.13,>=3.10"
 groups = ["main"]
 files = [
-    {file = "cognee-0.2.1-py3-none-any.whl", hash = "sha256:6e9d437e0c58a16233841ebf19b1a3d8b67da069460a4f08d0c0e00301b1d36d"},
-    {file = "cognee-0.2.1.tar.gz", hash = "sha256:bf5208383fc841981641c040e5b6588e58111af4d771f9eab6552f441e6a8e6c"},
+    {file = "cognee-0.2.4-py3-none-any.whl", hash = "sha256:56ab83c18ec9d7b307dfa206fcef39bc036e893d13e5390212f730b5204e3ae1"},
+    {file = "cognee-0.2.4.tar.gz", hash = "sha256:e8ac1c60cabb2e1d41db4f337a4dca3c7aa0c54d605d32e6087dba1c02b3beba"},
 ]
 
 [package.dependencies]
@@ -697,6 +715,7 @@ aiofiles = ">=23.2.1,<24.0.0"
 aiohttp = ">=3.11.14,<4.0.0"
 aiosqlite = ">=0.20.0,<1.0.0"
 alembic = ">=1.13.3,<2"
+baml-py = ">=0.201.0,<0.202.0"
 dlt = {version = ">=1.9.0,<2", extras = ["sqlalchemy"]}
 fastapi = ">=0.115.7,<1.0.0"
 fastapi-users = {version = ">=14.0.1,<15.0.0", extras = ["sqlalchemy"]}
@@ -707,13 +726,13 @@ kuzu = "0.11.0"
 lancedb = ">=0.24.0,<1.0.0"
 langfuse = ">=2.32.0,<3"
 limits = ">=4.4.1,<5"
-litellm = ">=1.57.4,<1.71.0"
+litellm = ">=1.71.0,<2.0.0"
 matplotlib = ">=3.8.3,<4"
 networkx = ">=3.4.2,<4"
 nltk = ">=3.9.1,<4.0.0"
 numpy = ">=1.26.4,<=4.0.0"
 onnxruntime = ">=1.0.0,<2.0.0"
-openai = ">=1.80.1,<2"
+openai = ">=1.80.1,<1.99.9"
 pandas = ">=2.2.2,<3.0.0"
 pre-commit = ">=4.0.1,<5"
 pydantic = ">=2.10.5,<3.0.0"
@@ -722,6 +741,7 @@ pylance = ">=0.22.0,<1.0.0"
 pympler = ">=1.1,<2.0.0"
 pypdf = ">=4.1.0,<6.0.0"
 python-dotenv = ">=1.0.1,<2.0.0"
+python-magic-bin = {version = "<0.5", markers = "platform_system == \"Windows\""}
 python-multipart = ">=0.0.20,<1.0.0"
 rdflib = ">=7.1.4,<7.2.0"
 s3fs = {version = "2025.3.2", extras = ["boto3"]}
@@ -739,7 +759,7 @@ aws = ["s3fs[boto3] (==2025.3.2)"]
 chromadb = ["chromadb (>=0.3.0,<0.7)", "pypika (==0.48.8)"]
 codegraph = ["fastembed (<=0.6.0) ; python_version < \"3.13\"", "transformers (>=4.46.3,<5)", "tree-sitter (>=0.24.0,<0.25)", "tree-sitter-python (>=0.23.6,<0.24)"]
 debug = ["debugpy (>=1.8.9,<2.0.0)"]
-deepeval = ["deepeval (>=2.0.1,<3)"]
+deepeval = ["deepeval (>=3.0.1,<4)"]
 dev = ["coverage (>=7.3.2,<8)", "deptry (>=0.20.0,<0.21)", "gitpython (>=3.1.43,<4)", "mkdocs-material (>=9.5.42,<10)", "mkdocs-minify-plugin (>=0.8.0,<0.9)", "mkdocstrings[python] (>=0.26.2,<0.27)", "mypy (>=1.7.1,<2)", "notebook (>=7.1.0,<8)", "pylint (>=3.0.3,<4)", "pytest (>=7.4.0,<8)", "pytest-asyncio (>=0.21.1,<0.22)", "pytest-cov (>=6.1.1,<7.0.0)", "ruff (>=0.9.2,<1.0.0)", "tweepy (>=4.14.0,<5.0.0)"]
 distributed = ["modal (>=1.0.5,<2.0.0)"]
 docs = ["unstructured[csv,doc,docx,epub,md,odt,org,ppt,pptx,rst,rtf,tsv,xlsx] (>=0.18.1,<19)"]
@@ -754,12 +774,12 @@ langchain = ["langchain_text_splitters (>=0.3.2,<1.0.0)", "langsmith (>=0.2.3,<1
 llama-index = ["llama-index-core (>=0.12.11,<0.13)"]
 mistral = ["mistral-common (>=1.5.2,<2)"]
 neo4j = ["neo4j (>=5.28.0,<6)"]
+neptune = ["langchain_aws (>=0.2.22)"]
 notebook = ["notebook (>=7.1.0,<8)"]
 ollama = ["transformers (>=4.46.3,<5)"]
 postgres = ["asyncpg (>=0.30.0,<1.0.0)", "pgvector (>=0.3.5,<0.4)", "psycopg2 (>=2.9.10,<3)"]
 postgres-binary = ["asyncpg (>=0.30.0,<1.0.0)", "pgvector (>=0.3.5,<0.4)", "psycopg2-binary (>=2.9.10,<3.0.0)"]
 posthog = ["posthog (>=3.5.0,<4)"]
-qdrant = ["qdrant-client (>=1.14.2,<2)"]
 
 [[package]]
 name = "colorama"
@@ -2350,32 +2370,35 @@ valkey = ["valkey (>=6)"]
 
 [[package]]
 name = "litellm"
-version = "1.70.4"
+version = "1.75.3"
 description = "Library to easily interface with LLM API providers"
 optional = false
 python-versions = "!=2.7.*,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,!=3.7.*,>=3.8"
 groups = ["main"]
 files = [
-    {file = "litellm-1.70.4-py3-none-any.whl", hash = "sha256:4d14d04bf5e2bd49336b4abc59193352c731ff371022e4fcf590208f41f644f7"},
-    {file = "litellm-1.70.4.tar.gz", hash = "sha256:ef6749a091faaaf88313afe4111cdd95736e1e60f21ba894e74f7c5bab2870bd"},
+    {file = "litellm-1.75.3-py3-none-any.whl", hash = "sha256:0ff3752b1f1c07f8a4b9a364b1595e2147ae640f1e77cd8312e6f6a5ca0f34ec"},
+    {file = "litellm-1.75.3.tar.gz", hash = "sha256:a6a0f33884f35a9391a9a4363043114d7f2513ab2e5c2e1fa54c56d695663764"},
 ]
 
 [package.dependencies]
-aiohttp = "*"
+aiohttp = ">=3.10"
 click = "*"
 httpx = ">=0.23.0"
 importlib-metadata = ">=6.8.0"
 jinja2 = ">=3.1.2,<4.0.0"
 jsonschema = ">=4.22.0,<5.0.0"
 openai = ">=1.68.2"
-pydantic = ">=2.0.0,<3.0.0"
+pydantic = ">=2.5.0,<3.0.0"
 python-dotenv = ">=0.2.0"
 tiktoken = ">=0.7.0"
 tokenizers = "*"
 
 [package.extras]
-extra-proxy = ["azure-identity (>=1.15.0,<2.0.0)", "azure-keyvault-secrets (>=4.8.0,<5.0.0)", "google-cloud-kms (>=2.21.3,<3.0.0)", "prisma (==0.11.0)", "redisvl (>=0.4.1,<0.5.0) ; python_version >= \"3.9\" and python_version < \"3.14\"", "resend (>=0.8.0,<0.9.0)"]
-proxy = ["PyJWT (>=2.8.0,<3.0.0)", "apscheduler (>=3.10.4,<4.0.0)", "backoff", "boto3 (==1.34.34)", "cryptography (>=43.0.1,<44.0.0)", "fastapi (>=0.115.5,<0.116.0)", "fastapi-sso (>=0.16.0,<0.17.0)", "gunicorn (>=23.0.0,<24.0.0)", "litellm-enterprise (==0.1.5)", "litellm-proxy-extras (==0.1.21)", "mcp (==1.5.0) ; python_version >= \"3.10\"", "orjson (>=3.9.7,<4.0.0)", "pynacl (>=1.5.0,<2.0.0)", "python-multipart (>=0.0.18,<0.0.19)", "pyyaml (>=6.0.1,<7.0.0)", "rich (==13.7.1)", "rq", "uvicorn (>=0.29.0,<0.30.0)", "uvloop (>=0.21.0,<0.22.0) ; sys_platform != \"win32\"", "websockets (>=13.1.0,<14.0.0)"]
+caching = ["diskcache (>=5.6.1,<6.0.0)"]
+extra-proxy = ["azure-identity (>=1.15.0,<2.0.0)", "azure-keyvault-secrets (>=4.8.0,<5.0.0)", "google-cloud-iam (>=2.19.1,<3.0.0)", "google-cloud-kms (>=2.21.3,<3.0.0)", "prisma (==0.11.0)", "redisvl (>=0.4.1,<0.5.0) ; python_version >= \"3.9\" and python_version < \"3.14\"", "resend (>=0.8.0,<0.9.0)"]
+mlflow = ["mlflow (>3.1.4) ; python_version >= \"3.10\""]
+proxy = ["PyJWT (>=2.8.0,<3.0.0)", "apscheduler (>=3.10.4,<4.0.0)", "azure-identity (>=1.15.0,<2.0.0)", "azure-storage-blob (>=12.25.1,<13.0.0)", "backoff", "boto3 (==1.34.34)", "cryptography (>=43.0.1,<44.0.0)", "fastapi (>=0.115.5,<0.116.0)", "fastapi-sso (>=0.16.0,<0.17.0)", "gunicorn (>=23.0.0,<24.0.0)", "litellm-enterprise (==0.1.19)", "litellm-proxy-extras (==0.2.16)", "mcp (>=1.10.0,<2.0.0) ; python_version >= \"3.10\"", "orjson (>=3.9.7,<4.0.0)", "polars (>=1.31.0,<2.0.0) ; python_version >= \"3.10\"", "pynacl (>=1.5.0,<2.0.0)", "python-multipart (>=0.0.18,<0.0.19)", "pyyaml (>=6.0.1,<7.0.0)", "rich (==13.7.1)", "rq", "uvicorn (>=0.29.0,<0.30.0)", "uvloop (>=0.21.0,<0.22.0) ; sys_platform != \"win32\"", "websockets (>=13.1.0,<14.0.0)"]
+semantic-router = ["semantic-router ; python_version >= \"3.9\""]
 utils = ["numpydoc"]
 
 [[package]]
@@ -3955,11 +3978,13 @@ optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
+    {file = "pylance-0.32.1-cp39-abi3-macosx_10_15_x86_64.whl", hash = "sha256:153b7fff2f145b089bd1206e46d895e2f53cbacfc44a534cbc129401b1419ea0"},
     {file = "pylance-0.32.1-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:83afa21fa5423d149b6a50dbd138faec90bfc7fc54cbced17a7fbc2b6178fc4a"},
     {file = "pylance-0.32.1-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b54a53320e9f6e9237e0682f0abe9ed3e118cfa6f1d99993f1addb131224631e"},
     {file = "pylance-0.32.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:54338cc0f2207550564d61fa60c679bd19631b92c7b139c6a7a140abc7e0ae00"},
     {file = "pylance-0.32.1-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:29912efc1ed227644a75a5f9e7cc3585676d6ea59a8cf2a06b30d5d5532c4add"},
     {file = "pylance-0.32.1-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:b4a1a2c79320e3b4d46b17d323331d32a73f0658abd88cbf67641758e98da8db"},
+    {file = "pylance-0.32.1-cp39-abi3-win_amd64.whl", hash = "sha256:0eabe5bd82e8548a9bb85351a39e32bc4c2c468ece5ff4f56da7fd5733d72dd4"},
 ]
 
 [package.dependencies]
@@ -4095,6 +4120,20 @@ files = [
 
 [package.extras]
 cli = ["click (>=5.0)"]
+
+[[package]]
+name = "python-magic-bin"
+version = "0.4.14"
+description = "File type identification using libmagic binary package"
+optional = false
+python-versions = "*"
+groups = ["main"]
+markers = "platform_system == \"Windows\""
+files = [
+    {file = "python_magic_bin-0.4.14-py2.py3-none-macosx_10_6_intel.whl", hash = "sha256:7b1743b3dbf16601d6eedf4e7c2c9a637901b0faaf24ad4df4d4527e7d8f66a4"},
+    {file = "python_magic_bin-0.4.14-py2.py3-none-win32.whl", hash = "sha256:34a788c03adde7608028203e2dbb208f1f62225ad91518787ae26d603ae68892"},
+    {file = "python_magic_bin-0.4.14-py2.py3-none-win_amd64.whl", hash = "sha256:90be6206ad31071a36065a2fc169c5afb5e0355cbe6030e87641c6c62edc2b69"},
+]
 
 [[package]]
 name = "python-multipart"
@@ -5757,4 +5796,4 @@ dev = ["mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<=3.13"
-content-hash = "bed06b8176199e3052306ba9213f1ba446e2eeb33a2b3e01a8346bf450cb740e"
+content-hash = "557462c108de1688d100ab8c1c00fb8b5d38258d1f278af8aff0b6464e1042e4"

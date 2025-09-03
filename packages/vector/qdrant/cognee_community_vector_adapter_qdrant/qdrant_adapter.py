@@ -216,7 +216,8 @@ class QDrantAdapter(VectorDBInterface):
         - collection_name (str): Name of the collection to search in.
         - query_texts (List[str]): List of query texts to search for.
         - limit (int): List of result limits for search requests.
-        - with_vectors (bool, optional): Bool indicating whether to return vectors for search requests.
+        - with_vectors (bool, optional): Bool indicating whether to return
+                                         vectors for search requests.
 
         Returns:
         - results: The search results from Qdrant.

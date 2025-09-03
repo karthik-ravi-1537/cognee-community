@@ -34,7 +34,9 @@ class NetworkXAdapter(GraphDBInterface):
     _instance = None
     graph = None  # Class variable to store the singleton instance
 
-    #:TODO: Since networkx is not a real database these params dont make sense but they are needed for now because of cognee third party graph db interface handling. We have to find a better solution
+    #:TODO: Since networkx is not a real database these params dont make sense but they are
+    #:TODO: needed for now because of cognee third party graph db interface handling.
+    #:TODO: We have to find a better solution
     def __new__(cls, graph_database_url, graph_database_username, graph_database_password):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -231,7 +233,8 @@ class NetworkXAdapter(GraphDBInterface):
             for edge in edges:
                 if len(edge) < 3 or len(edge) > 4:
                     raise ValueError(
-                        f"Invalid edge format: {edge}. Expected (from_node, to_node, relationship_name[, properties])"
+                        f"Invalid edge format: {edge}. Expected (from_node, to_node, "
+                        f"relationship_name[, properties])"
                     )
 
                 # Convert UUIDs to strings if needed
@@ -693,7 +696,7 @@ class NetworkXAdapter(GraphDBInterface):
             if os.path.exists(file_path):
                 await aiofiles_os.remove(file_path)
 
-            self.graph = None
+            # self.graph = None
             logger.info("Graph deleted successfully.")
         except Exception as error:
             logger.error("Failed to delete graph: %s", error)
@@ -873,7 +876,7 @@ class NetworkXAdapter(GraphDBInterface):
 
         # Find chunks connected via is_part_of (chunks point TO document)
         chunks = []
-        for source, target, edge_data in self.graph.in_edges(document_node_id, data=True):
+        for source, _target, edge_data in self.graph.in_edges(document_node_id, data=True):
             if edge_data.get("relationship_name") == "is_part_of":
                 chunks.append({"id": source, **self.graph.nodes[source]})  # Keep as UUID object
 
@@ -881,7 +884,7 @@ class NetworkXAdapter(GraphDBInterface):
         entities = []
         for chunk in chunks:
             chunk_id = chunk["id"]  # Already a UUID object
-            for source, target, edge_data in self.graph.out_edges(chunk_id, data=True):
+            for _source, target, edge_data in self.graph.out_edges(chunk_id, data=True):
                 if edge_data.get("relationship_name") == "contains":
                     entities.append(
                         {"id": target, **self.graph.nodes[target]}
@@ -893,7 +896,7 @@ class NetworkXAdapter(GraphDBInterface):
             entity_id = entity["id"]  # Already a UUID object
             # Get all chunks that contain this entity
             containing_chunks = []
-            for source, target, edge_data in self.graph.in_edges(entity_id, data=True):
+            for source, _target, edge_data in self.graph.in_edges(entity_id, data=True):
                 if edge_data.get("relationship_name") == "contains":
                     containing_chunks.append(source)  # Keep as UUID object
 
@@ -931,7 +934,7 @@ class NetworkXAdapter(GraphDBInterface):
         made_from_nodes = []
         for chunk in chunks:
             chunk_id = chunk["id"]  # Already a UUID object
-            for source, target, edge_data in self.graph.in_edges(chunk_id, data=True):
+            for source, _target, edge_data in self.graph.in_edges(chunk_id, data=True):
                 if edge_data.get("relationship_name") == "made_from":
                     made_from_nodes.append(
                         {"id": source, **self.graph.nodes[source]}

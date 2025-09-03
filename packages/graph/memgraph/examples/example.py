@@ -8,16 +8,12 @@ import pprint
 import cognee
 from cognee.infrastructure.databases.graph import get_graph_engine
 
-from cognee_community_graph_adapter_memgraph import register
+# NOTE: Importing the register module we let cognee know it can use the memgraph graph adapter
+# NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
+from cognee_community_graph_adapter_memgraph import register  # noqa: F401
 
 
 async def main():
-    # Register the Memgraph community adapter
-    register()
-
-    # Configure cognee to use Memgraph
-    cognee.config.set_graph_database_provider("memgraph")
-
     # Set up your Memgraph connection
     # Make sure you have Memgraph running on localhost:7687
     cognee.config.set_graph_db_config(
@@ -35,11 +31,13 @@ async def main():
 
     # Sample data to add to the knowledge graph
     sample_data = [
-        "Artificial intelligence is a branch of computer science that aims to create intelligent machines.",
+        "Artificial intelligence is a branch of computer science that aims to"
+        "create intelligent machines.",
         "Machine learning is a subset of AI that focuses on algorithms that can learn from data.",
         "Deep learning is a subset of machine learning that uses neural networks with many layers.",
         "Natural language processing enables computers to understand and process human language.",
-        "Computer vision allows machines to interpret and make decisions based on visual information.",
+        "Computer vision allows machines to interpret and make decisions"
+        "based on visual information.",
     ]
 
     print("Adding data to Cognee...")
@@ -61,12 +59,11 @@ async def main():
     print("\nSearching with Chain of Thought reasoning...")
     await cognee.search(
         query_type=cognee.SearchType.GRAPH_COMPLETION_COT,
-        query_text="How does machine learning relate to artificial intelligence and what are its applications?",
+        query_text="How does machine learning relate to artificial intelligence"
+        "and what are its applications?",
     )
 
-    print(
-        "\nYou can get the graph data directly, or visualize it in an HTML file like below:"
-    )
+    print("\nYou can get the graph data directly, or visualize it in an HTML file like below:")
 
     # Get graph data directly
     graph_engine = await get_graph_engine()

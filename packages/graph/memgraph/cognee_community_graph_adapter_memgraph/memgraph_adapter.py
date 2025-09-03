@@ -305,7 +305,8 @@ class MemgraphAdapter(GraphDBInterface):
         """
         query = """
             MATCH (from_node)-[relationship]->(to_node)
-            WHERE from_node.id = $from_node_id AND to_node.id = $to_node_id AND type(relationship) = $edge_label
+            WHERE from_node.id = $from_node_id AND to_node.id = $to_node_id
+            AND type(relationship) = $edge_label
             RETURN COUNT(relationship) > 0 AS edge_exists
         """
 
@@ -335,8 +336,10 @@ class MemgraphAdapter(GraphDBInterface):
         query = """
             UNWIND $edges AS edge
             MATCH (a)-[r]->(b)
-            WHERE id(a) = edge.from_node AND id(b) = edge.to_node AND type(r) = edge.relationship_name
-            RETURN edge.from_node AS from_node, edge.to_node AS to_node, edge.relationship_name AS relationship_name, count(r) > 0 AS edge_exists
+            WHERE id(a) = edge.from_node AND id(b) = edge.to_node
+            AND type(r) = edge.relationship_name
+            RETURN edge.from_node AS from_node, edge.to_node AS to_node, edge.relationship_name
+            AS relationship_name, count(r) > 0 AS edge_exists
         """
 
         try:
@@ -403,9 +406,7 @@ class MemgraphAdapter(GraphDBInterface):
 
         return await self.query(query, params)
 
-    async def add_edges(
-        self, edges: list[tuple[str, str, str, dict[str, Any]]]
-    ) -> None:
+    async def add_edges(self, edges: list[tuple[str, str, str, dict[str, Any]]]) -> None:
         """
         Batch add multiple edges between nodes, enforcing specified relationships.
 
@@ -531,9 +532,7 @@ class MemgraphAdapter(GraphDBInterface):
         results = await self.query(query)
         return results[0]["ids"] if len(results) > 0 else []
 
-    async def get_predecessors(
-        self, node_id: str, edge_label: Optional[str] = None
-    ) -> list[str]:
+    async def get_predecessors(self, node_id: str, edge_label: Optional[str] = None) -> list[str]:
         """
         Retrieve all predecessors of a node based on its ID and optional edge label.
 
@@ -580,9 +579,7 @@ class MemgraphAdapter(GraphDBInterface):
 
             return [result["predecessor"] for result in results]
 
-    async def get_successors(
-        self, node_id: str, edge_label: Optional[str] = None
-    ) -> list[str]:
+    async def get_successors(self, node_id: str, edge_label: Optional[str] = None) -> list[str]:
         """
         Retrieve all successors of a node based on its ID and optional edge label.
 
@@ -702,15 +699,11 @@ class MemgraphAdapter(GraphDBInterface):
 
         for neighbour in predecessors:
             neighbour = neighbour["relation"]
-            connections.append(
-                (neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2])
-            )
+            connections.append((neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2]))
 
         for neighbour in successors:
             neighbour = neighbour["relation"]
-            connections.append(
-                (neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2])
-            )
+            connections.append((neighbour[0], {"relationship_name": neighbour[1]}, neighbour[2]))
 
         return connections
 
@@ -809,9 +802,7 @@ class MemgraphAdapter(GraphDBInterface):
                 continue
 
             if isinstance(property_value, dict):
-                serialized_properties[property_key] = json.dumps(
-                    property_value, cls=JSONEncoder
-                )
+                serialized_properties[property_key] = json.dumps(property_value, cls=JSONEncoder)
                 continue
 
             serialized_properties[property_key] = property_value
@@ -904,8 +895,7 @@ class MemgraphAdapter(GraphDBInterface):
         where_clauses = []
         for attribute, values in attribute_filters[0].items():
             values_str = ", ".join(
-                f"'{value}'" if isinstance(value, str) else str(value)
-                for value in values
+                f"'{value}'" if isinstance(value, str) else str(value) for value in values
             )
             where_clauses.append(f"n.{attribute} IN [{values_str}]")
 
@@ -983,9 +973,7 @@ class MemgraphAdapter(GraphDBInterface):
         )
         relationship_types_result = await self.query(relationship_types_query)
         relationship_types = (
-            relationship_types_result[0]["relationships"]
-            if relationship_types_result
-            else []
+            relationship_types_result[0]["relationships"] if relationship_types_result else []
         )
 
         if not relationship_types:
@@ -993,9 +981,7 @@ class MemgraphAdapter(GraphDBInterface):
 
         relationship_types_undirected_str = (
             "{"
-            + ", ".join(
-                f"{rel}" + ": {orientation: 'UNDIRECTED'}" for rel in relationship_types
-            )
+            + ", ".join(f"{rel}" + ": {orientation: 'UNDIRECTED'}" for rel in relationship_types)
             + "}"
         )
         return relationship_types_undirected_str
@@ -1029,9 +1015,7 @@ class MemgraphAdapter(GraphDBInterface):
                 "num_nodes": num_nodes,
                 "num_edges": num_edges,
                 "mean_degree": (2 * num_edges) / num_nodes if num_nodes > 0 else 0,
-                "edge_density": (num_edges) / (num_nodes * (num_nodes - 1))
-                if num_nodes > 1
-                else 0,
+                "edge_density": (num_edges) / (num_nodes * (num_nodes - 1)) if num_nodes > 1 else 0,
             }
 
             # Calculate connected components
@@ -1044,9 +1028,7 @@ class MemgraphAdapter(GraphDBInterface):
             """
             components_result = await self.query(components_query)
             component_sizes = (
-                [len(comp) for comp in components_result[0][0]]
-                if components_result
-                else []
+                [len(comp) for comp in components_result[0][0]] if components_result else []
             )
 
             mandatory_metrics.update(
@@ -1108,9 +1090,7 @@ class MemgraphAdapter(GraphDBInterface):
                     "avg_shortest_path_length": sum(path_lengths) / len(path_lengths)
                     if path_lengths
                     else -1,
-                    "avg_clustering": clustering[0][0]
-                    if clustering and clustering[0][0]
-                    else -1,
+                    "avg_clustering": clustering[0][0] if clustering and clustering[0][0] else -1,
                 }
             else:
                 optional_metrics = {

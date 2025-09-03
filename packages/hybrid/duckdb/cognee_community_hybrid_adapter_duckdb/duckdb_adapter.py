@@ -220,7 +220,8 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         try:
             if not await self.has_collection(collection_name):
                 logger.warning(
-                    f"Collection '{collection_name}' not found in DuckDBAdapter.retrieve; returning []."
+                    f"Collection '{collection_name}' not found in DuckDBAdapter.retrieve; "
+                    f"returning []."
                 )
                 return []
 
@@ -317,7 +318,8 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             # Execute vector similarity search using cosine similarity
 
             search_query = f"""
-            SELECT id, text, vector, payload, array_cosine_distance(vector, {vector_str}) as distance
+            SELECT id, text, vector, payload, array_cosine_distance(vector, {vector_str})
+            as distance
             FROM {collection_name}
             LIMIT {limit}
             """

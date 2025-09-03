@@ -13,7 +13,9 @@ Email: emily.carter@example.com
 Phone: (555) 123-4567
 Summary:
 
-Senior Data Scientist with over 8 years of experience in machine learning and predictive analytics. Expertise in developing advanced algorithms and deploying scalable models in production environments.
+Senior Data Scientist with over 8 years of experience in machine learning and predictive analytics.
+Expertise in developing advanced algorithms and deploying scalable models in
+production environments.
 
 Education:
 
@@ -45,7 +47,8 @@ Email: michael.rodriguez@example.com
 Phone: (555) 234-5678
 Summary:
 
-Data Scientist with a strong background in machine learning and statistical modeling. Skilled in handling large datasets and translating data into actionable business insights.
+Data Scientist with a strong background in machine learning and statistical modeling.
+Skilled in handling large datasets and translating data into actionable business insights.
 
 Education:
 
@@ -77,7 +80,9 @@ Email: sarah.nguyen@example.com
 Phone: (555) 345-6789
 Summary:
 
-Data Scientist specializing in machine learning with 6 years of experience. Passionate about leveraging data to drive business solutions and improve product performance.
+Data Scientist specializing in machine learning with 6 years of experience.
+Passionate about leveraging data to drive business solutions and
+improve product performance.
 
 Education:
 
@@ -109,7 +114,8 @@ Email: david.thompson@example.com
 Phone: (555) 456-7890
 Summary:
 
-Creative Graphic Designer with over 8 years of experience in visual design and branding. Proficient in Adobe Creative Suite and passionate about creating compelling visuals.
+Creative Graphic Designer with over 8 years of experience in visual design and branding.
+Proficient in Adobe Creative Suite and passionate about creating compelling visuals.
 
 Education:
 
@@ -139,7 +145,8 @@ Email: jessica.miller@example.com
 Phone: (555) 567-8901
 Summary:
 
-Experienced Sales Manager with a strong track record in driving sales growth and building high-performing teams. Excellent communication and leadership skills.
+Experienced Sales Manager with a strong track record in driving sales growth and
+building high-performing teams. Excellent communication and leadership skills.
 
 Education:
 
@@ -161,6 +168,10 @@ Negotiation and Relationship Building
 
 
 async def main(enable_steps: dict[str, bool]) -> None:
+    # NOTE: Importing the register module we let cognee know it can use the DuckDB graph adapter
+    # NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
+    from cognee_community_hybrid_adapter_duckdb import register  # noqa: F401
+
     # Please provide your Milvus instance url or local path
     cognee.config.set_vector_db_config(
         {

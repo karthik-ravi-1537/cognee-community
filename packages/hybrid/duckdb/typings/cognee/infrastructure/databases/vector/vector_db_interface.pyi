@@ -14,7 +14,8 @@ class VectorDBInterface(Protocol):
     ) -> None: ...
     async def create_vector_index(self, index_name: str, index_property_name: str) -> None: ...
 
-    # TODO: Looks like we forgot update this method in the interface in root repo. Reflect this in the interface in root repo
+    # TODO: Looks like we forgot update this method in the interface in root repo.
+    #  Reflect this in the interface in root repo
     async def index_data_points(
         self, index_name: str, index_property_name: str, data_points: list[DataPoint]
     ) -> None: ...
@@ -22,7 +23,8 @@ class VectorDBInterface(Protocol):
         self, collection_name: str, data_point_ids: list[str]
     ) -> list[dict[str, Any]]: ...
 
-    # TODO: Looks like we forgot update this method in the interface in root repo. Reflect this in the interface in root repo
+    # TODO: Looks like we forgot update this method in the interface in root repo.
+    #  Reflect this in the interface in root repo
     async def search(
         self,
         collection_name: str,

@@ -388,8 +388,8 @@ class WeaviateAdapter(VectorDBInterface):
         """
         Perform a search on a collection using either a text query or a vector query.
 
-        Return scored results based on the search criteria provided. Raise MissingQueryParameterError if
-        no query is provided.
+        Return scored results based on the search criteria provided.
+        Raise MissingQueryParameterError if no query is provided.
 
         Parameters:
         -----------
@@ -416,7 +416,7 @@ class WeaviateAdapter(VectorDBInterface):
         if query_vector is None:
             query_vector = (await self.embed_data([query_text]))[0]
 
-        # TODO: Creation of new client for every search call. This is VERY ugly, needs discussion. (Andrej's comment)
+        # TODO: Creation of new client for every search call. This is VERY ugly. Should change.
         async with weaviate.use_async_with_weaviate_cloud(
             cluster_url=self.url,
             auth_credentials=weaviate.auth.AuthApiKey(self.api_key),
