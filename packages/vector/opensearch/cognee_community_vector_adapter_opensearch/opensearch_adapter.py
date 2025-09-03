@@ -99,19 +99,19 @@ class OpenSearchAdapter(VectorDBInterface):
             },
         )
 
-    #     self._lock = asyncio.Lock()
-    #     self._users = 0
-    #
-    # async def _acquire(self):
-    #     async with self._lock:
-    #         self._users += 1  # ← increment
-    #         return self.client
-    #
-    # async def _release(self):
-    #     async with self._lock:
-    #         self._users -= 1  # ← decrement
-    #         if self._users == 0 and self.client:
-    #             await self.client.close()
+        self._lock = asyncio.Lock()
+        self._users = 0
+
+    async def _acquire(self):
+        async with self._lock:
+            self._users += 1  # ← increment
+            return self.client
+
+    async def _release(self):
+        async with self._lock:
+            self._users -= 1  # ← decrement
+            if self._users == 0 and self.client:
+                await self.client.close()
 
     def _get_index_name(self, collection_name: str) -> str:
         """
@@ -311,7 +311,7 @@ class OpenSearchAdapter(VectorDBInterface):
         if query_vector is None:
             query_vector = (await self.embed_data([query_text]))[0]
 
-        # await self._acquire()
+        await self._acquire()
 
         index = self._get_index_name(collection_name)
         query = {
@@ -335,8 +335,8 @@ class OpenSearchAdapter(VectorDBInterface):
             return results
         except NotFoundError as nfe:
             raise CollectionNotFoundError(f"Collection '{collection_name}' not found!") from nfe
-        # finally:
-        #     await self._release()
+        finally:
+            await self._release()
 
     async def batch_search(
         self,
