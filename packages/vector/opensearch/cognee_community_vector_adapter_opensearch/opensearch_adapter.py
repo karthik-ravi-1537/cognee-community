@@ -188,7 +188,7 @@ class OpenSearchAdapter(VectorDBInterface):
                                 "method": {
                                     "name": "hnsw",
                                     "space_type": "cosinesimil",
-                                    "engine": "faiss",
+                                    "engine": "nmslib",
                                 },
                             },
                         }
