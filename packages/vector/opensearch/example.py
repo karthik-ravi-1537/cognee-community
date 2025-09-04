@@ -23,7 +23,7 @@ async def main():
         {
             "vector_db_provider": "opensearch",
             "vector_db_url": "http://localhost:9200",
-            "vector_db_key": "",
+            "vector_db_key": os.getenv("VECTOR_DB_KEY", ""),
         }
     )
 

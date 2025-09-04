@@ -421,36 +421,42 @@ class MemgraphAdapter(GraphDBInterface):
 
             - None: None.
         """
-        query = dedent("""
-            UNWIND $edges AS edge
-            MATCH (from {id: edge.from_node}),
-                    (to   {id: edge.to_node})
-            MERGE (from)-[r:edge.relationship_name]->(to)
-            ON CREATE SET r += $properties, r.updated_at = timestamp()
-            ON MATCH SET r += $properties, r.updated_at = timestamp()
-            RETURN r
-            """)
+        grouped: dict[str, list[tuple[UUID, UUID, dict[str, Any]]]] = dict.setdefault(list)
+        for src, dst, rel_type, properties in edges:
+            grouped[rel_type].append((src, dst, properties or {}))
 
-        edges = [
-            {
-                "from_node": str(edge[0]),
-                "to_node": str(edge[1]),
-                "relationship_name": edge[2],
-                "properties": {
-                    **(edge[3] if edge[3] else {}),
-                    "source_node_id": str(edge[0]),
-                    "target_node_id": str(edge[1]),
-                },
-            }
-            for edge in edges
-        ]
+        for rel_type, rel_edges in grouped.items():
+            query = dedent(f"""
+                UNWIND $edges AS edge
+                MATCH (from_node {{id: edge.from_node}}),
+                      (to_node   {{id: edge.to_node}})
+                MERGE (from_node)-[r:{rel_type}]->(to_node)
+                ON CREATE SET r += edge.properties,
+                              r.updated_at = timestamp()
+                ON MATCH  SET r += edge.properties,
+                              r.updated_at = timestamp()
+                RETURN count(r) AS merged
+                """)
 
-        try:
-            results = await self.query(query, {"edges": edges})
-            return results
-        except Neo4jError as error:
-            logger.error("Memgraph query error: %s", error, exc_info=True)
-            raise error
+            edges = [
+                {
+                    "from_node": str(src),
+                    "to_node": str(dst),
+                    "properties": {
+                        **properties,
+                        "source_node_id": str(src),
+                        "target_node_id": str(dst),
+                    },
+                }
+                for src, dst, properties in rel_edges
+            ]
+            try:
+                results = await self.query(query, {"edges": edges})
+                return results
+            except Neo4jError as error:
+                logger.error("Memgraph query error: %s", error, exc_info=True)
+                raise error
+        return None
 
     async def get_edges(self, node_id: str):
         """
