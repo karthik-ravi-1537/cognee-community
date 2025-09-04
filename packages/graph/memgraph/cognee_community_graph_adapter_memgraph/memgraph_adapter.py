@@ -421,7 +421,9 @@ class MemgraphAdapter(GraphDBInterface):
 
             - None: None.
         """
-        grouped: dict[str, list[tuple[UUID, UUID, dict[str, Any]]]] = dict.setdefault(list)
+        from collections import defaultdict
+
+        grouped: dict[str, list[tuple[str, str, dict[str, Any]]]] = defaultdict(list)
         for src, dst, rel_type, properties in edges:
             grouped[rel_type].append((src, dst, properties or {}))
 
@@ -430,7 +432,10 @@ class MemgraphAdapter(GraphDBInterface):
                 UNWIND $edges AS edge
                 MATCH (from_node {{id: edge.from_node}}),
                       (to_node   {{id: edge.to_node}})
-                MERGE (from_node)-[r:{rel_type}]->(to_node)
+                MERGE (from_node)-[r:{rel_type}{{
+                      source_node_id: edge.from_node,
+                      target_node_id: edge.to_node
+                  }}]->(to_node)
                 ON CREATE SET r += edge.properties,
                               r.updated_at = timestamp()
                 ON MATCH  SET r += edge.properties,
@@ -443,7 +448,7 @@ class MemgraphAdapter(GraphDBInterface):
                     "from_node": str(src),
                     "to_node": str(dst),
                     "properties": {
-                        **properties,
+                        **(properties if properties else {}),
                         "source_node_id": str(src),
                         "target_node_id": str(dst),
                     },
