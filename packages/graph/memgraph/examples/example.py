@@ -9,11 +9,13 @@ import cognee
 from cognee.infrastructure.databases.graph import get_graph_engine
 
 # NOTE: Importing the register module we let cognee know it can use the memgraph graph adapter
-# NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
-from cognee_community_graph_adapter_memgraph import register  # noqa: F401
+from cognee_community_graph_adapter_memgraph import register
 
 
 async def main():
+    # Configure cognee to use Memgraph
+    cognee.config.set_graph_database_provider("memgraph")
+    register()
     # Set up your Memgraph connection
     # Make sure you have Memgraph running on localhost:7687
     cognee.config.set_graph_db_config(

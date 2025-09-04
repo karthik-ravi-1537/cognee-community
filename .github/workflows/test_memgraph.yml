@@ -72,7 +72,7 @@ jobs:
           EMBEDDING_ENDPOINT: ${{ secrets.EMBEDDING_ENDPOINT }}
           EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
           EMBEDDING_API_VERSION: ${{ secrets.EMBEDDING_API_VERSION }}
-#          GRAPH_DATABASE_PROVIDER: 'memgraph'
+          GRAPH_DATABASE_PROVIDER: 'memgraph'
           GRAPH_DB_URL: 'bolt://localhost:7687'
         working-directory: ./packages/graph/memgraph
         run: poetry run python examples/example.py

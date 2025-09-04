@@ -421,22 +421,15 @@ class MemgraphAdapter(GraphDBInterface):
 
             - None: None.
         """
-        query = """
+        query = dedent("""
             UNWIND $edges AS edge
-            MATCH (from_node {id: edge.from_node})
-            MATCH (to_node {id: edge.to_node})
-            CALL merge.relationship(
-                from_node,
-                edge.relationship_name,
-                {
-                    source_node_id: edge.from_node,
-                    target_node_id: edge.to_node
-                },
-                edge.properties,
-                to_node,
-                {}
-            ) YIELD rel
-            RETURN rel"""
+            MATCH (from {id: edge.from_node}),
+                    (to   {id: edge.to_node})
+            MERGE (from)-[r:edge.relationship_name]->(to)
+            ON CREATE SET r += $properties, r.updated_at = timestamp()
+            ON MATCH SET r += $properties, r.updated_at = timestamp()
+            RETURN r
+            """)
 
         edges = [
             {
