@@ -1,7 +1,7 @@
 import asyncio
 import json
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 from uuid import UUID
 
 if TYPE_CHECKING:
@@ -23,6 +23,7 @@ from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
 from cognee.infrastructure.engine import DataPoint
+from cognee.infrastructure.databases.vector.embeddings import get_embedding_engine
 
 from falkordb.falkordb import FalkorDB
 from falkordb.graph import Graph, QueryResult
@@ -84,15 +85,21 @@ class FalkorDBAdapter:
 
     def __init__(
         self,
-        database_url: str,
-        database_port: int,
-        embedding_engine: EmbeddingEngine,
+        graph_database_url: Optional[str] = None,
+        # graph_database_port: int,
+        graph_database_username: Optional[str] = None,
+        graph_database_password: Optional[str] = None,
+        embedding_engine: Optional[EmbeddingEngine] = None,
+        url : Optional[str] = None,
+        api_key: Optional[str] = None,
     ):
         self.driver = FalkorDB(
-            host=database_url,
-            port=database_port,
+            host=url if url else graph_database_url,
+            # port=graph_database_port,
+            username=graph_database_username,
+            password=graph_database_password
         )
-        self.embedding_engine = embedding_engine
+        self.embedding_engine = get_embedding_engine() if not embedding_engine else embedding_engine
         self.graph_name = "cognee_graph"
 
     # TODO: This should return a list of results, not a single result
@@ -717,7 +724,7 @@ class FalkorDBAdapter:
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 10,
+        limit: Optional[int] = 10,
         with_vector: bool = False,
     ) -> list:
         """
@@ -746,6 +753,14 @@ class FalkorDBAdapter:
 
         if query_text and not query_vector:
             query_vector = (await self.embed_data([query_text]))[0]
+
+        if not limit:
+            query = f"MATCH (n) RETURN COUNT(n)"
+            result = self.query(query)
+            limit = result.result_set[0]
+
+        if limit == 0:
+            return []
 
         # For FalkorDB, let's do a simple property-based search instead of vector search for now
         # since the vector index might not be set up correctly
@@ -784,7 +799,7 @@ class FalkorDBAdapter:
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int | None = None,
+        limit: Optional[int] = None,
         with_vectors: bool = False,
     ) -> list:
         """

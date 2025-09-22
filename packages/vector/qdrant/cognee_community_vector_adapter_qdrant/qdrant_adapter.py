@@ -154,7 +154,7 @@ class QDrantAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 15,
+        limit: Optional[int] = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
         if query_text is None and query_vector is None:
@@ -168,7 +168,7 @@ class QDrantAdapter(VectorDBInterface):
 
         try:
             client = self.get_qdrant_client()
-            if limit == 0:
+            if not limit:
                 collection_size = await client.count(collection_name=collection_name)
                 limit = collection_size.count
             if limit == 0:
@@ -206,7 +206,7 @@ class QDrantAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int = None,
+        limit: Optional[int] = None,
         with_vectors: bool = False,
     ):
         """

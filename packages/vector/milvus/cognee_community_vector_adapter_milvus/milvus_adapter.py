@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, Optional
 
 from pymilvus import MilvusClient
 
@@ -318,7 +318,7 @@ class MilvusAdapter:
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 10,
+        limit: Optional[int] = 10,
         with_vector: bool = False,
         **kwargs: object,
     ) -> list[dict[str, object]]:
@@ -362,9 +362,11 @@ class MilvusAdapter:
             # Load the collection for search
             client.load_collection(collection_name)
             # Validate limit parameter
-            # TODO: Make this limit value make more sense, like the size of the collection
-            if limit <= 0:
-                limit = 10000
+            if not limit:
+                stats = client.get_collection_stats(collection_name)
+                limit = stats["row_count"]
+            if limit == 0:
+                return []
 
             # Perform the search
             search_params = {"metric_type": "COSINE", "params": {"nprobe": 10}}
@@ -399,7 +401,7 @@ class MilvusAdapter:
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int = 10,
+        limit: Optional[int] = 10,
         with_vectors: bool = False,
         **kwargs: object,
     ) -> list[list[dict[str, object]]]:

@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
@@ -382,7 +383,7 @@ class WeaviateAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 15,
+        limit: Optional[int] = 15,
         with_vector: bool = False,
     ):
         """
@@ -427,11 +428,17 @@ class WeaviateAdapter(VectorDBInterface):
 
             collection = client.collections.get(collection_name)
 
+            if not limit:
+                limit = collection.aggregate.over_all(total_count=True)
+
+            if limit == 0:
+                return []
+
             try:
                 search_result = await collection.query.hybrid(
                     query=None,
                     vector=query_vector,
-                    limit=limit if limit > 0 else None,
+                    limit=limit,
                     include_vector=with_vector,
                     return_metadata=wvc.query.MetadataQuery(score=True),
                 )
@@ -452,7 +459,7 @@ class WeaviateAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int,
+        limit: Optional[int],
         with_vectors: bool = False,
     ):
         """

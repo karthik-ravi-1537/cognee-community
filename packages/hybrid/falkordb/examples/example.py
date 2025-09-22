@@ -18,25 +18,20 @@ async def main():
     config.system_root_directory(path.join(system_path, ".cognee_system"))
     config.data_root_directory(path.join(system_path, ".data_storage"))
 
-    config.set_graph_db_config(
-        {
-            "graph_database_provider": "falkordb",
-        }
-    )
-
     config.set_vector_db_config(
         {
-            "vector_db_provider": "falkordb",
+            "vector_db_provider": "falkor",
             "vector_db_url": "localhost",
-            "vector_db_port": 6379,
+            # "vector_db_port": 6379,
         }
     )
 
     # Please provide your Falkor instance configuration
     config.set_graph_db_config(
         {
+            "graph_database_provider": "falkor",
             "graph_database_url": "localhost",
-            "graph_database_port": 6379,
+            # "graph_database_port": 6379,
         }
     )
     await prune.prune_data()

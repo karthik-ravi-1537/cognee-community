@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 from uuid import UUID
 
 import duckdb
@@ -254,7 +254,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 15,
+        limit: Optional[int] = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
         """[VECTOR] Search for similar vectors."""
@@ -280,16 +280,13 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         if query_text is None and query_vector is None:
             raise MissingQueryParameterError()
 
-        if limit <= 0:
-            limit = 15
-
         if not await self.has_collection(collection_name):
             logger.warning(
                 f"Collection '{collection_name}' not found in DuckDBAdapter.search; returning []."
             )
             return []
 
-        if limit == 0:
+        if not limit:
             search_query = f"""select count(*) from {collection_name}"""
             count = await self._execute_query_one(search_query)
             if count is None:
@@ -297,8 +294,8 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
                 return []
             limit = count[0]
 
-        if limit == 0:
-            logger.warning("Limit is 0 in DuckDBAdapter.search; returning [].")
+        if limit <= 0:
+            logger.warning("Limit is 0 or less in DuckDBAdapter.search; returning [].")
             return []
 
         try:
@@ -356,7 +353,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int = 15,
+        limit: Optional[int] = 15,
         with_vectors: bool = False,
     ) -> list[list[ScoredResult]]:
         """[VECTOR] Perform batch vector search."""
