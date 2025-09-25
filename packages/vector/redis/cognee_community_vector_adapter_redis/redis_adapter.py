@@ -204,7 +204,6 @@ class RedisAdapter(VectorDBInterface):
                     logger.info(f"Collection {collection_name} already exists")
                     return
 
-                index = self._get_index(collection_name)
                 await index.create(overwrite=False)
 
                 logger.info(f"Created collection {collection_name}")
@@ -229,6 +228,7 @@ class RedisAdapter(VectorDBInterface):
         index = self._get_index(collection_name)
         try:
             if not await self.has_collection(collection_name):
+                await index.disconnect()
                 raise CollectionNotFoundError(f"Collection {collection_name} not found!")
 
             # Embed the data points
@@ -366,11 +366,12 @@ class RedisAdapter(VectorDBInterface):
 
         index = self._get_index(collection_name)
 
-        if not limit:
+        if limit is None:
             info = await index.info()
             limit = info["num_docs"]
 
         if limit <= 0:
+            await index.disconnect()
             return []
 
         try:
@@ -502,7 +503,7 @@ class RedisAdapter(VectorDBInterface):
                     if await index.exists():
                         await index.delete(drop=True)
                         logger.info(f"Dropped index {collection_name}")
-                        await index.disconnect()
+                    await index.disconnect()
                 except Exception as e:
                     logger.warning(f"Failed to drop index {collection_name}: {str(e)}")
                     await index.disconnect()
@@ -515,3 +516,12 @@ class RedisAdapter(VectorDBInterface):
         except Exception as e:
             logger.error(f"Error during prune: {str(e)}")
             raise e
+
+    async def get_collection_names(self):
+        """
+            Get names of all collections in the database.
+
+            Returns:
+                List of collection names. In this case of Redis, the return type is a dict.
+        """
+        return self._indices.keys()

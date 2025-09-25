@@ -86,7 +86,7 @@ class FalkorDBAdapter:
     def __init__(
         self,
         graph_database_url: Optional[str] = None,
-        # graph_database_port: int,
+        graph_database_port: Optional[int] = 6379,
         graph_database_username: Optional[str] = None,
         graph_database_password: Optional[str] = None,
         embedding_engine: Optional[EmbeddingEngine] = None,
@@ -95,12 +95,13 @@ class FalkorDBAdapter:
     ):
         self.driver = FalkorDB(
             host=url if url else graph_database_url,
-            # port=graph_database_port,
+            port=graph_database_port,
             username=graph_database_username,
             password=graph_database_password
         )
         self.embedding_engine = get_embedding_engine() if not embedding_engine else embedding_engine
         self.graph_name = "cognee_graph"
+        self.api_key = api_key
 
     # TODO: This should return a list of results, not a single result
     def query(self, query: str, params: dict = None) -> QueryResult:
@@ -754,10 +755,10 @@ class FalkorDBAdapter:
         if query_text and not query_vector:
             query_vector = (await self.embed_data([query_text]))[0]
 
-        if not limit:
+        if limit is None:
             query = f"MATCH (n) RETURN COUNT(n)"
             result = self.query(query)
-            limit = result.result_set[0]
+            limit = result.result_set[0][0]
 
         if limit == 0:
             return []
@@ -821,9 +822,6 @@ class FalkorDBAdapter:
 
             Returns a list of results for each search query executed in parallel.
         """
-
-        if limit is None:
-            limit = 10
 
         query_vectors = await self.embedding_engine.embed_text(query_texts)
 

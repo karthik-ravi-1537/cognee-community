@@ -428,8 +428,9 @@ class WeaviateAdapter(VectorDBInterface):
 
             collection = client.collections.get(collection_name)
 
-            if not limit:
-                limit = collection.aggregate.over_all(total_count=True)
+            if limit is None:
+                result = await collection.aggregate.over_all(total_count=True)
+                limit = result.total_count
 
             if limit == 0:
                 return []
@@ -549,3 +550,14 @@ class WeaviateAdapter(VectorDBInterface):
         client = await self.get_client()
         await client.collections.delete_all()
         await client.close()
+
+    async def get_collection_names(self) -> list[str]:
+        """
+            Get names of all collections in the database.
+
+            Returns:
+                list[str]: List of collection names.
+        """
+
+        client = await self.get_client()
+        return await client.collections.list_all()

@@ -22,7 +22,7 @@ async def main():
         {
             "vector_db_provider": "falkor",
             "vector_db_url": "localhost",
-            # "vector_db_port": 6379,
+            "vector_db_port": 6379,
         }
     )
 
@@ -31,7 +31,7 @@ async def main():
         {
             "graph_database_provider": "falkor",
             "graph_database_url": "localhost",
-            # "graph_database_port": 6379,
+            "graph_database_port": 6379,
         }
     )
     await prune.prune_data()

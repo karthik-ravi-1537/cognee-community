@@ -286,7 +286,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
             )
             return []
 
-        if not limit:
+        if limit is None:
             search_query = f"""select count(*) from {collection_name}"""
             count = await self._execute_query_one(search_query)
             if count is None:
@@ -433,6 +433,25 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         except Exception as e:
             logger.error(f"Error during prune: {str(e)}")
             raise e
+
+    async def get_collection_names(self):
+        """
+            Get names of all collections in the database.
+
+            Returns:
+                List of collection names. In this case of Redis, the return type is a dict.
+        """
+        collection_names = []
+        # Get all table names from the database
+        tables_query = (
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'main'"
+        )
+        tables_result = await self._execute_query(tables_query)
+        for row in tables_result:
+            table_name = row[0] if isinstance(row, list | tuple) else row
+            collection_names.append(table_name)
+
+        return collection_names
 
     # GraphDBInterface methods
     async def query(self, query: str, params: dict[str, Any]) -> list[Any]:

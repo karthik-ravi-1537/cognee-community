@@ -1,4 +1,5 @@
 import asyncio
+from typing import Optional
 
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector import VectorDBInterface
@@ -168,7 +169,7 @@ class QDrantAdapter(VectorDBInterface):
 
         try:
             client = self.get_qdrant_client()
-            if not limit:
+            if limit is None:
                 collection_size = await client.count(collection_name=collection_name)
                 limit = collection_size.count
             if limit == 0:
@@ -258,3 +259,21 @@ class QDrantAdapter(VectorDBInterface):
             await client.delete_collection(collection.name)
 
         await client.close()
+
+    async def get_collection_names(self) -> list[str]:
+        """
+            Get names of all collections in the database.
+
+            Returns:
+                list[str]: List of collection names.
+        """
+
+        client = self.get_qdrant_client()
+
+        response = await client.get_collections()
+
+        result = [collection.name for collection in response.collections]
+
+        await client.close()
+
+        return result
