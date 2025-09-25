@@ -72,7 +72,7 @@ async def test_getting_of_documents(dataset_name_1):
     )
 
 
-async def test_vector_engine_search_none_limit():
+async def test_vector_engine_search_none_limit() -> None:
     file_path_quantum = os.path.join(
         pathlib.Path(__file__).parent.parent.parent.parent, "test_data/Quantum_computers.txt"
     )
@@ -110,7 +110,7 @@ async def test_vector_engine_search_none_limit():
     assert len(result) > 15
 
 
-async def main():
+async def main() -> None:
     # Please provide your Milvus instance url or local path
     cognee.config.set_vector_db_config(
         {

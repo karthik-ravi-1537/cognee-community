@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from pymilvus import MilvusClient
 
@@ -524,7 +524,7 @@ class MilvusAdapter:
         # In a real implementation, you would calculate actual distances
         return [0.0] * len(elements)
 
-    def get_collection_names(self):
+    def get_collection_names(self) -> Any:
         """
         Get names of all collections in the database.
 
