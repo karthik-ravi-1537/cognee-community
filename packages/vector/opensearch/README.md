@@ -29,12 +29,12 @@ poetry install # run this command in the directory containing the pyproject.toml
 
 ## Connection Setup
 
-For a quick local setup, you can run a docker container that qdrant provides (https://qdrant.tech/documentation/quickstart/). 
+For a quick local setup, you can run a docker container that opensearch provides.
 After this, you will be able to connect to the Qdrant DB through the appropriate ports. The command for running the docker 
 container looks something like the following:
 
 ```
-docker pull opensearchproject/opensearch:latest && docker run -it -p 9200:9200 -p 9600:9600 -e "discovery.type=single-node" -e "DISABLE_SECURITY_PLUGIN=true" opensearchproject/opensearch:latest
+docker pull opensearchproject/opensearch:2.17.1 && docker run -it -p 9200:9200 -p 9600:9600 -e "discovery.type=single-node" -e "DISABLE_SECURITY_PLUGIN=true" opensearchproject/opensearch:2.17.1
 ```
 
 ## Configuration
