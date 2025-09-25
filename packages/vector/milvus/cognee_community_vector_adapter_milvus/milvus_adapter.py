@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import TYPE_CHECKING, cast, Optional
+from typing import TYPE_CHECKING, cast
 
 from pymilvus import MilvusClient
 
@@ -206,7 +206,6 @@ class MilvusAdapter:
                     "metadata": data_point.metadata,
                 }
 
-
                 client.insert(
                     collection_name=collection_name,
                     data=doc_data,
@@ -273,7 +272,9 @@ class MilvusAdapter:
         --------
             None
         """
-        await self.create_data_points(collection_name=f"{index_name}_{field_name}", data_points=data_points)
+        await self.create_data_points(
+            collection_name=f"{index_name}_{field_name}", data_points=data_points
+        )
 
     async def retrieve(self, collection_name: str, data_point_ids: list[str]) -> list[DataPoint]:
         """
@@ -317,7 +318,7 @@ class MilvusAdapter:
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: Optional[int] = 10,
+        limit: int | None = 10,
         with_vector: bool = False,
         **kwargs: object,
     ) -> list[dict[str, object]]:
@@ -388,11 +389,9 @@ class MilvusAdapter:
                 if with_vector:
                     payload["vector"] = result["vector"]
 
-                scored_results.append(ScoredResult(
-                        id=result["id"],
-                        payload=payload,
-                        score=result.score),
-                    )
+                scored_results.append(
+                    ScoredResult(id=result["id"], payload=payload, score=result.score),
+                )
 
             return scored_results
         except Exception as e:
@@ -403,7 +402,7 @@ class MilvusAdapter:
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: Optional[int] = 10,
+        limit: int | None = 10,
         with_vectors: bool = False,
         **kwargs: object,
     ) -> list[list[dict[str, object]]]:
@@ -459,10 +458,8 @@ class MilvusAdapter:
                     if with_vectors:
                         payload["vectors"] = result["vectors"]
 
-                    query_search_results.append(ScoredResult(
-                        id=result["id"],
-                        payload=payload,
-                        score=result.score),
+                    query_search_results.append(
+                        ScoredResult(id=result["id"], payload=payload, score=result.score),
                     )
                 batch_results.append(query_search_results)
 
@@ -508,7 +505,6 @@ class MilvusAdapter:
         for collection_name in collections:
             client.drop_collection(collection_name)
 
-
     async def get_distance_from_collection_elements(
         self, collection_name: str, elements: list[DataPoint]
     ) -> list[float]:
@@ -530,10 +526,10 @@ class MilvusAdapter:
 
     def get_collection_names(self):
         """
-            Get names of all collections in the database.
+        Get names of all collections in the database.
 
-            Returns:
-                List of collection names.
+        Returns:
+            List of collection names.
         """
         client = self.get_milvus_client()
         return client.list_collections()

@@ -2,12 +2,12 @@ import os
 import pathlib
 
 import cognee
-from cognee.shared.logging_utils import get_logger
 from cognee.infrastructure.files.storage import get_storage_config
 from cognee.modules.data.models import Data
-from cognee.modules.users.methods import get_default_user
-from cognee.modules.search.types import SearchType
 from cognee.modules.search.operations import get_history
+from cognee.modules.search.types import SearchType
+from cognee.modules.users.methods import get_default_user
+from cognee.shared.logging_utils import get_logger
 
 # NOTE: Importing the register module we let cognee know it can use the Qdrant vector adapter
 # NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
@@ -17,9 +17,10 @@ logger = get_logger()
 
 
 async def test_local_file_deletion(data_text, file_location):
-    from sqlalchemy import select
     import hashlib
+
     from cognee.infrastructure.databases.relational import get_relational_engine
+    from sqlalchemy import select
 
     engine = get_relational_engine()
 
@@ -72,13 +73,13 @@ async def test_getting_of_documents(dataset_name_1):
 
 
 async def test_vector_engine_search_none_limit():
-
     file_path_quantum = os.path.join(
         pathlib.Path(__file__).parent.parent.parent.parent, "test_data/Quantum_computers.txt"
     )
 
     file_path_nlp = os.path.join(
-        pathlib.Path(__file__).parent.parent.parent.parent, "test_data/Natural_language_processing.txt"
+        pathlib.Path(__file__).parent.parent.parent.parent,
+        "test_data/Natural_language_processing.txt",
     )
 
     await cognee.prune.prune_data()
@@ -104,12 +105,12 @@ async def test_vector_engine_search_none_limit():
         collection_name=collection_name, query_vector=query_vector, limit=None
     )
 
-    # Check that we did not accidentally use any default value for limit in vector search along the way (like 5, 10, or 15)
+    # Check that we did not accidentally use any default value for limit
+    # in vector search along the way (like 5, 10, or 15)
     assert len(result) > 15
 
 
 async def main():
-
     cognee.config.set_relational_db_config(
         {
             "db_provider": "sqlite",
@@ -148,7 +149,8 @@ async def main():
     dataset_name_2 = "quantum"
 
     explanation_file_path_nlp = os.path.join(
-        pathlib.Path(__file__).parent.parent.parent.parent, "test_data/Natural_language_processing.txt"
+        pathlib.Path(__file__).parent.parent.parent.parent,
+        "test_data/Natural_language_processing.txt",
     )
 
     explanation_file_path_quantum = os.path.join(

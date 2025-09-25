@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import json
-from typing import Optional
 
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
@@ -283,7 +282,7 @@ class OpenSearchAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: Optional[int] = 15,
+        limit: int | None = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
         """
@@ -343,7 +342,7 @@ class OpenSearchAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: Optional[int] = 15,
+        limit: int | None = 15,
         with_vectors: bool = False,
     ):
         """
@@ -398,10 +397,10 @@ class OpenSearchAdapter(VectorDBInterface):
 
     async def get_collection_names(self):
         """
-            Get names of all collections in the database.
+        Get names of all collections in the database.
 
-            Returns:
-                List of collection names.
+        Returns:
+            List of collection names.
         """
 
         indices = await self.client.indices.get(index=f"{self.index_prefix}*")

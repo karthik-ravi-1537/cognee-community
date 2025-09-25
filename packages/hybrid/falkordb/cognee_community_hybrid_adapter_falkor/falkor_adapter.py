@@ -1,7 +1,7 @@
 import asyncio
 import json
 from textwrap import dedent
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 if TYPE_CHECKING:
@@ -19,11 +19,11 @@ from cognee.infrastructure.databases.graph.graph_db_interface import (
     NodeData,
     record_graph_changes,
 )
+from cognee.infrastructure.databases.vector.embeddings import get_embedding_engine
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
 from cognee.infrastructure.engine import DataPoint
-from cognee.infrastructure.databases.vector.embeddings import get_embedding_engine
 
 from falkordb.falkordb import FalkorDB
 from falkordb.graph import Graph, QueryResult
@@ -85,19 +85,19 @@ class FalkorDBAdapter:
 
     def __init__(
         self,
-        graph_database_url: Optional[str] = None,
-        graph_database_port: Optional[int] = 6379,
-        graph_database_username: Optional[str] = None,
-        graph_database_password: Optional[str] = None,
-        embedding_engine: Optional[EmbeddingEngine] = None,
-        url : Optional[str] = None,
-        api_key: Optional[str] = None,
+        graph_database_url: str | None = None,
+        graph_database_port: int | None = 6379,
+        graph_database_username: str | None = None,
+        graph_database_password: str | None = None,
+        embedding_engine: EmbeddingEngine | None = None,
+        url: str | None = None,
+        api_key: str | None = None,
     ):
         self.driver = FalkorDB(
             host=url if url else graph_database_url,
             port=graph_database_port,
             username=graph_database_username,
-            password=graph_database_password
+            password=graph_database_password,
         )
         self.embedding_engine = get_embedding_engine() if not embedding_engine else embedding_engine
         self.graph_name = "cognee_graph"
@@ -725,7 +725,7 @@ class FalkorDBAdapter:
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: Optional[int] = 10,
+        limit: int | None = 10,
         with_vector: bool = False,
     ) -> list:
         """
@@ -756,7 +756,7 @@ class FalkorDBAdapter:
             query_vector = (await self.embed_data([query_text]))[0]
 
         if limit is None:
-            query = f"MATCH (n) RETURN COUNT(n)"
+            query = "MATCH (n) RETURN COUNT(n)"
             result = self.query(query)
             limit = result.result_set[0][0]
 
@@ -800,7 +800,7 @@ class FalkorDBAdapter:
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: Optional[int] = None,
+        limit: int | None = None,
         with_vectors: bool = False,
     ) -> list:
         """

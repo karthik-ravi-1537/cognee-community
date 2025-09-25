@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
@@ -383,7 +382,7 @@ class WeaviateAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: Optional[int] = 15,
+        limit: int | None = 15,
         with_vector: bool = False,
     ):
         """
@@ -460,7 +459,7 @@ class WeaviateAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: Optional[int],
+        limit: int | None,
         with_vectors: bool = False,
     ):
         """
@@ -553,10 +552,10 @@ class WeaviateAdapter(VectorDBInterface):
 
     async def get_collection_names(self) -> list[str]:
         """
-            Get names of all collections in the database.
+        Get names of all collections in the database.
 
-            Returns:
-                list[str]: List of collection names.
+        Returns:
+            list[str]: List of collection names.
         """
 
         client = await self.get_client()

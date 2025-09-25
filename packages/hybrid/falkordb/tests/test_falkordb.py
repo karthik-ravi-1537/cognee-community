@@ -1,11 +1,12 @@
 import os
-import cognee
 import pathlib
+
+import cognee
 from cognee.infrastructure.files.storage import get_storage_config
 from cognee.modules.search.operations import get_history
+from cognee.modules.search.types import SearchType
 from cognee.modules.users.methods import get_default_user
 from cognee.shared.logging_utils import get_logger
-from cognee.modules.search.types import SearchType
 
 # NOTE: Importing the register module we let cognee know it can use the falkordb graph adapter
 # NOTE: The "noqa: F401" mark is to make sure the linter doesn't flag this as an unused import
@@ -27,14 +28,15 @@ async def check_falkordb_connection():
         logger.warning(f"FalkorDB not available at localhost:6379: {e}")
         return False
 
-async def test_vector_engine_search_none_limit():
 
+async def test_vector_engine_search_none_limit():
     file_path_quantum = os.path.join(
         pathlib.Path(__file__).parent.parent.parent.parent, "test_data/Quantum_computers.txt"
     )
 
     file_path_nlp = os.path.join(
-        pathlib.Path(__file__).parent.parent.parent.parent, "test_data/Natural_language_processing.txt"
+        pathlib.Path(__file__).parent.parent.parent.parent,
+        "test_data/Natural_language_processing.txt",
     )
 
     await cognee.prune.prune_data()
@@ -60,7 +62,8 @@ async def test_vector_engine_search_none_limit():
         collection_name=collection_name, query_vector=query_vector, limit=None
     )
 
-    # Check that we did not accidentally use any default value for limit in vector search along the way (like 5, 10, or 15)
+    # Check that we did not accidentally use any default value for limit
+    # in vector search along the way (like 5, 10, or 15)
     assert len(result) > 15
 
 
@@ -116,10 +119,23 @@ async def main():
     )
     await cognee.add([ai_text_file_path], dataset_name)
 
-    text = """A large language model (LLM) is a language model notable for its ability to achieve general-purpose language generation and other natural language processing tasks such as classification. LLMs acquire these abilities by learning statistical relationships from text documents during a computationally intensive self-supervised and semi-supervised training process. LLMs can be used for text generation, a form of generative AI, by taking an input text and repeatedly predicting the next token or word.
-    LLMs are artificial neural networks. The largest and most capable, as of March 2024, are built with a decoder-only transformer-based architecture while some recent implementations are based on other architectures, such as recurrent neural network variants and Mamba (a state space model).
-    Up to 2020, fine tuning was the only way a model could be adapted to be able to accomplish specific tasks. Larger sized models, such as GPT-3, however, can be prompt-engineered to achieve similar results.[6] They are thought to acquire knowledge about syntax, semantics and "ontology" inherent in human language corpora, but also inaccuracies and biases present in the corpora.
-    Some notable LLMs are OpenAI's GPT series of models (e.g., GPT-3.5 and GPT-4, used in ChatGPT and Microsoft Copilot), Google's PaLM and Gemini (the latter of which is currently used in the chatbot of the same name), xAI's Grok, Meta's LLaMA family of open-source models, Anthropic's Claude models, Mistral AI's open source models, and Databricks' open source DBRX.
+    text = """A large language model (LLM) is a language model notable for its ability to achieve
+    general-purpose language generation and other natural language processing tasks such as
+    classification. LLMs acquire these abilities by learning statistical relationships from
+    text documents during a computationally intensive self-supervised and semi-supervised training
+    process. LLMs can be used for text generation, a form of generative AI, by taking an input text
+    and repeatedly predicting the next token or word. LLMs are artificial neural networks. The
+    largest and most capable, as of March 2024, are built with a decoder-only transformer-based
+    architecture while some recent implementations are based on other architectures, such as
+    recurrent neural network variants and Mamba (a state space model). Up to 2020, fine tuning was
+    the only way a model could be adapted to be able to accomplish specific tasks. Larger sized
+    models, such as GPT-3, however, can be prompt-engineered to achieve similar results.[6]
+    They are thought to acquire knowledge about syntax, semantics and "ontology" inherent in human
+    language corpora, but also inaccuracies and biases present in the corpora. Some notable LLMs
+    are OpenAI's GPT series of models (e.g., GPT-3.5 and GPT-4, used in ChatGPT and Microsoft
+    Copilot), Google's PaLM and Gemini (the latter of which is currently used in the chatbot of the
+    same name), xAI's Grok, Meta's LLaMA family of open-source models, Anthropic's Claude models,
+    Mistral AI's open source models, and Databricks' open source DBRX.
     """
 
     await cognee.add([text], dataset_name)

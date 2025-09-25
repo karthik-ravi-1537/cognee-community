@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import duckdb
@@ -254,7 +254,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: Optional[int] = 15,
+        limit: int | None = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
         """[VECTOR] Search for similar vectors."""
@@ -353,7 +353,7 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: Optional[int] = 15,
+        limit: int | None = 15,
         with_vectors: bool = False,
     ) -> list[list[ScoredResult]]:
         """[VECTOR] Perform batch vector search."""
@@ -436,10 +436,10 @@ class DuckDBAdapter(VectorDBInterface, GraphDBInterface):
 
     async def get_collection_names(self):
         """
-            Get names of all collections in the database.
+        Get names of all collections in the database.
 
-            Returns:
-                List of collection names. In this case of Redis, the return type is a dict.
+        Returns:
+            List of collection names. In this case of Redis, the return type is a dict.
         """
         collection_names = []
         # Get all table names from the database

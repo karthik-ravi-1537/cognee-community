@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector import VectorDBInterface
@@ -155,7 +154,7 @@ class QDrantAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: Optional[int] = 15,
+        limit: int | None = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
         if query_text is None and query_vector is None:
@@ -207,7 +206,7 @@ class QDrantAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: Optional[int] = None,
+        limit: int | None = None,
         with_vectors: bool = False,
     ):
         """
@@ -262,10 +261,10 @@ class QDrantAdapter(VectorDBInterface):
 
     async def get_collection_names(self) -> list[str]:
         """
-            Get names of all collections in the database.
+        Get names of all collections in the database.
 
-            Returns:
-                list[str]: List of collection names.
+        Returns:
+            list[str]: List of collection names.
         """
 
         client = self.get_qdrant_client()

@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
@@ -336,7 +336,7 @@ class RedisAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: Optional[int] = 15,
+        limit: int | None = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
         """Search for similar vectors in the collection.
@@ -426,7 +426,7 @@ class RedisAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: Optional[int],
+        limit: int | None,
         with_vectors: bool = False,
     ) -> list[list[ScoredResult]]:
         """Perform batch search for multiple queries.
@@ -519,9 +519,9 @@ class RedisAdapter(VectorDBInterface):
 
     async def get_collection_names(self):
         """
-            Get names of all collections in the database.
+        Get names of all collections in the database.
 
-            Returns:
-                List of collection names. In this case of Redis, the return type is a dict.
+        Returns:
+            List of collection names. In this case of Redis, the return type is a dict.
         """
         return self._indices.keys()
