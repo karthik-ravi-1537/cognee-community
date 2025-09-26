@@ -37,7 +37,7 @@ jobs:
       qdrant-node:
         image: qdrant/qdrant
         options: >-
-          -v ${{ github.workspace }}/qdrant_storage:/qdrant/storage
+          -v /tmp/qdrant_storage:/qdrant/storage
         ports:
           - 6333:6333
           - 6334:6334
