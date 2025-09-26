@@ -19,10 +19,10 @@ on:
         required: true
       EMBEDDING_API_VERSION:
         required: true
-      QDRANT_API_URL:
-        required: true
-      QDRANT_API_KEY:
-        required: true
+#      QDRANT_API_URL:
+#        required: true
+#      QDRANT_API_KEY:
+#        required: true
   workflow_dispatch:
   pull_request:
     branches: [ main, dev ]
@@ -37,6 +37,14 @@ jobs:
   test-qdrant:
     name: "Qdrant Community Adapter Test"
     runs-on: ubuntu-22.04
+    services:
+      qdrant-node:
+        image: qdrant/qdrant
+        options: >-
+          -v ${{ github.workspace }}/qdrant_storage:/qdrant/storage
+        ports:
+          - 6333:6333
+          - 6334:6334
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -49,10 +57,10 @@ jobs:
 
       - name: Debug Qdrant Configuration
         run: |
-          echo "QDRANT_API_URL is set: ${{ secrets.QDRANT_API_URL != '' }}"
-          echo "QDRANT_API_KEY is set: ${{ secrets.QDRANT_API_KEY != '' }}"
+#          echo "QDRANT_API_URL is set: ${{ secrets.QDRANT_API_URL != '' }}"
+#          echo "QDRANT_API_KEY is set: ${{ secrets.QDRANT_API_KEY != '' }}"
           echo "Testing connectivity to Qdrant..."
-          curl -f "${{ secrets.QDRANT_API_URL }}/health" -H "api-key: ${{ secrets.QDRANT_API_KEY }}" || echo "Connection failed"
+          curl -f "http://localhost:6333/health" || echo "Connection failed"
 
       - name: Run Qdrant Example
         env:
@@ -66,8 +74,7 @@ jobs:
           EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
           EMBEDDING_API_VERSION: ${{ secrets.EMBEDDING_API_VERSION }}
           VECTOR_DB_PROVIDER: 'qdrant'
-          QDRANT_API_URL: ${{ secrets.QDRANT_API_URL }}
-          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          VECTOR_DB_URL: 'http://localhost:6333'
         working-directory: ./packages/vector/qdrant
         run: poetry run python example.py
 
@@ -83,7 +90,6 @@ jobs:
           EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
           EMBEDDING_API_VERSION: ${{ secrets.EMBEDDING_API_VERSION }}
           VECTOR_DB_PROVIDER: 'qdrant'
-          QDRANT_API_URL: ${{ secrets.QDRANT_API_URL }}
-          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          VECTOR_DB_URL: 'http://localhost:6333'
         working-directory: ./packages/vector/qdrant
         run: poetry run python tests/test_qdrant.py
