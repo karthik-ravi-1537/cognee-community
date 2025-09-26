@@ -19,10 +19,6 @@ on:
         required: true
       EMBEDDING_API_VERSION:
         required: true
-#      QDRANT_API_URL:
-#        required: true
-#      QDRANT_API_KEY:
-#        required: true
   workflow_dispatch:
   pull_request:
     branches: [ main, dev ]
@@ -57,8 +53,6 @@ jobs:
 
       - name: Debug Qdrant Configuration
         run: |
-#          echo "QDRANT_API_URL is set: ${{ secrets.QDRANT_API_URL != '' }}"
-#          echo "QDRANT_API_KEY is set: ${{ secrets.QDRANT_API_KEY != '' }}"
           echo "Testing connectivity to Qdrant..."
           curl -f "http://localhost:6333/health" || echo "Connection failed"
 
