@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from pymilvus import MilvusClient
 
@@ -12,6 +12,7 @@ from cognee.infrastructure.databases.exceptions import MissingQueryParameterErro
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
+from cognee.infrastructure.databases.vector.models.ScoredResult import ScoredResult
 from cognee.infrastructure.engine import DataPoint
 from cognee.infrastructure.files.storage import get_file_storage
 from cognee.shared.logging_utils import get_logger
@@ -187,33 +188,32 @@ class MilvusAdapter:
 
         client = self.get_milvus_client()
 
-        # Prepare data for insertion
-        ids = []
-        vectors = []
-        texts = []
-        metadatas = []
-
-        for data_point in data_points:
-            ids.append(str(data_point.id))
-            vectors.append(data_point.vector)
-            texts.append(data_point.text)
-            metadatas.append(data_point.metadata)
+        # Embed the data points
+        data_vectors = await self.embed_data(
+            [DataPoint.get_embeddable_data(data_point) for data_point in data_points]
+        )
 
         try:
-            await client.insert(
-                collection_name=collection_name,
-                data={
-                    "id": ids,
-                    "vector": vectors,
-                    "text": texts,
-                    "metadata": metadatas,
-                },
-            )
+            for data_point, embedding in zip(data_points, data_vectors, strict=False):
+                doc_data = {
+                    "id": str(data_point.id),
+                    "text": getattr(
+                        data_point,
+                        data_point.metadata.get("index_fields", ["text"])[0],
+                        "",
+                    ),
+                    "vector": embedding,
+                    "metadata": data_point.metadata,
+                }
+
+                client.insert(
+                    collection_name=collection_name,
+                    data=doc_data,
+                )
             client.flush(collection_name)
             logger.info(
                 f"Inserted {len(data_points)} data points into collection: {collection_name}"
             )
-            # print(f"Collection: {collection_name}")
         except Exception as e:
             logger.error(f"Error inserting data points into collection {collection_name}: {e}")
             raise
@@ -272,9 +272,9 @@ class MilvusAdapter:
         --------
             None
         """
-        # For Milvus, indexing is handled automatically when creating the index
-        # This method is kept for interface compatibility
-        pass
+        await self.create_data_points(
+            collection_name=f"{index_name}_{field_name}", data_points=data_points
+        )
 
     async def retrieve(self, collection_name: str, data_point_ids: list[str]) -> list[DataPoint]:
         """
@@ -318,7 +318,7 @@ class MilvusAdapter:
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 10,
+        limit: int | None = 10,
         with_vector: bool = False,
         **kwargs: object,
     ) -> list[dict[str, object]]:
@@ -362,9 +362,11 @@ class MilvusAdapter:
             # Load the collection for search
             client.load_collection(collection_name)
             # Validate limit parameter
-            # TODO: Make this limit value make more sense, like the size of the collection
-            if limit <= 0:
-                limit = 10000
+            if limit is None:
+                stats = client.get_collection_stats(collection_name)
+                limit = stats["row_count"]
+            if limit == 0:
+                return []
 
             # Perform the search
             search_params = {"metric_type": "COSINE", "params": {"nprobe": 10}}
@@ -378,19 +380,20 @@ class MilvusAdapter:
                 output_fields=["id", "text", "metadata"],
             )
 
-            search_results = []
+            scored_results = []
             for result in results[0]:  # results is a list of lists
-                search_result = {
-                    "id": result["id"],
+                payload = {
                     "text": result["text"],
                     "metadata": result["metadata"],
-                    "score": result["score"],
                 }
                 if with_vector:
-                    search_result["vector"] = result["vector"]
-                search_results.append(search_result)
+                    payload["vector"] = result["vector"]
 
-            return search_results
+                scored_results.append(
+                    ScoredResult(id=result["id"], payload=payload, score=result.score),
+                )
+
+            return scored_results
         except Exception as e:
             logger.error(f"Error searching collection {collection_name}: {e}")
             raise
@@ -399,7 +402,7 @@ class MilvusAdapter:
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int = 10,
+        limit: int | None = 10,
         with_vectors: bool = False,
         **kwargs: object,
     ) -> list[list[dict[str, object]]]:
@@ -426,6 +429,12 @@ class MilvusAdapter:
             # Load the collection for search
             client.load_collection(collection_name)
 
+            if limit is None:
+                stats = client.get_collection_stats(collection_name)
+                limit = stats["row_count"]
+            if limit == 0:
+                return []
+
             # Perform the batch search
             search_params = {"metric_type": "COSINE", "params": {"nprobe": 10}}
 
@@ -442,13 +451,16 @@ class MilvusAdapter:
             for query_results in results:
                 query_search_results = []
                 for result in query_results:
-                    search_result = {
-                        "id": result["id"],
+                    payload = {
                         "text": result["text"],
                         "metadata": result["metadata"],
-                        "score": result["score"],
                     }
-                    query_search_results.append(search_result)
+                    if with_vectors:
+                        payload["vectors"] = result["vectors"]
+
+                    query_search_results.append(
+                        ScoredResult(id=result["id"], payload=payload, score=result.score),
+                    )
                 batch_results.append(query_search_results)
 
             return batch_results
@@ -488,9 +500,10 @@ class MilvusAdapter:
         --------
             None
         """
-        # Milvus client doesn't require explicit cleanup
-        # This method is kept for interface compatibility
-        pass
+        client = self.get_milvus_client()
+        collections = client.list_collections()
+        for collection_name in collections:
+            client.drop_collection(collection_name)
 
     async def get_distance_from_collection_elements(
         self, collection_name: str, elements: list[DataPoint]
@@ -510,6 +523,16 @@ class MilvusAdapter:
         # This is a placeholder implementation
         # In a real implementation, you would calculate actual distances
         return [0.0] * len(elements)
+
+    def get_collection_names(self) -> Any:
+        """
+        Get names of all collections in the database.
+
+        Returns:
+            List of collection names.
+        """
+        client = self.get_milvus_client()
+        return client.list_collections()
 
 
 if TYPE_CHECKING:

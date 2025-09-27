@@ -154,7 +154,7 @@ class QDrantAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 15,
+        limit: int | None = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
         if query_text is None and query_vector is None:
@@ -168,7 +168,7 @@ class QDrantAdapter(VectorDBInterface):
 
         try:
             client = self.get_qdrant_client()
-            if limit == 0:
+            if limit is None:
                 collection_size = await client.count(collection_name=collection_name)
                 limit = collection_size.count
             if limit == 0:
@@ -206,7 +206,7 @@ class QDrantAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int = None,
+        limit: int | None = None,
         with_vectors: bool = False,
     ):
         """
@@ -258,3 +258,21 @@ class QDrantAdapter(VectorDBInterface):
             await client.delete_collection(collection.name)
 
         await client.close()
+
+    async def get_collection_names(self) -> list[str]:
+        """
+        Get names of all collections in the database.
+
+        Returns:
+            list[str]: List of collection names.
+        """
+
+        client = self.get_qdrant_client()
+
+        response = await client.get_collections()
+
+        result = [collection.name for collection in response.collections]
+
+        await client.close()
+
+        return result

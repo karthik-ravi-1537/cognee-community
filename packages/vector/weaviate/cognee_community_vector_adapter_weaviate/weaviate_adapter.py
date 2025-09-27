@@ -184,7 +184,7 @@ class WeaviateAdapter(VectorDBInterface):
                 )
             else:
                 result = await self.get_collection(collection_name)
-                await client.close()
+                # await client.close()
                 return result
 
     async def get_collection(self, collection_name: str):
@@ -291,8 +291,8 @@ class WeaviateAdapter(VectorDBInterface):
         except Exception as error:
             logger.error("Error creating data points: %s", str(error))
             raise error
-        finally:
-            await self.client.close()
+        # finally:
+        #     await self.client.close()
 
     async def create_vector_index(self, index_name: str, index_property_name: str):
         """
@@ -374,7 +374,7 @@ class WeaviateAdapter(VectorDBInterface):
             data_point.id = data_point.uuid
             del data_point.properties
 
-        await self.client.close()
+        # await self.client.close()
         return data_points.objects
 
     async def search(
@@ -382,7 +382,7 @@ class WeaviateAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 15,
+        limit: int | None = 15,
         with_vector: bool = False,
     ):
         """
@@ -427,11 +427,18 @@ class WeaviateAdapter(VectorDBInterface):
 
             collection = client.collections.get(collection_name)
 
+            if limit is None:
+                result = await collection.aggregate.over_all(total_count=True)
+                limit = result.total_count
+
+            if limit == 0:
+                return []
+
             try:
                 search_result = await collection.query.hybrid(
                     query=None,
                     vector=query_vector,
-                    limit=limit if limit > 0 else None,
+                    limit=limit,
                     include_vector=with_vector,
                     return_metadata=wvc.query.MetadataQuery(score=True),
                 )
@@ -452,7 +459,7 @@ class WeaviateAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int,
+        limit: int | None,
         with_vectors: bool = False,
     ):
         """
@@ -530,7 +537,7 @@ class WeaviateAdapter(VectorDBInterface):
             filters=Filter.by_id().contains_any(data_point_ids)
         )
 
-        await self.client.close()
+        # await self.client.close()
         return result
 
     async def prune(self):
@@ -541,4 +548,15 @@ class WeaviateAdapter(VectorDBInterface):
         """
         client = await self.get_client()
         await client.collections.delete_all()
-        await client.close()
+        # await client.close()
+
+    async def get_collection_names(self) -> list[str]:
+        """
+        Get names of all collections in the database.
+
+        Returns:
+            list[str]: List of collection names.
+        """
+
+        client = await self.get_client()
+        return await client.collections.list_all()

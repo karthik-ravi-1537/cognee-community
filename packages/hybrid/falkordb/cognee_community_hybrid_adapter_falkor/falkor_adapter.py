@@ -19,6 +19,7 @@ from cognee.infrastructure.databases.graph.graph_db_interface import (
     NodeData,
     record_graph_changes,
 )
+from cognee.infrastructure.databases.vector.embeddings import get_embedding_engine
 from cognee.infrastructure.databases.vector.embeddings.EmbeddingEngine import (
     EmbeddingEngine,
 )
@@ -84,16 +85,23 @@ class FalkorDBAdapter:
 
     def __init__(
         self,
-        database_url: str,
-        database_port: int,
-        embedding_engine: EmbeddingEngine,
+        graph_database_url: str | None = None,
+        graph_database_port: int | None = 6379,
+        graph_database_username: str | None = None,
+        graph_database_password: str | None = None,
+        embedding_engine: EmbeddingEngine | None = None,
+        url: str | None = None,
+        api_key: str | None = None,
     ):
         self.driver = FalkorDB(
-            host=database_url,
-            port=database_port,
+            host=url if url else graph_database_url,
+            port=graph_database_port,
+            username=graph_database_username,
+            password=graph_database_password,
         )
-        self.embedding_engine = embedding_engine
+        self.embedding_engine = get_embedding_engine() if not embedding_engine else embedding_engine
         self.graph_name = "cognee_graph"
+        self.api_key = api_key
 
     # TODO: This should return a list of results, not a single result
     def query(self, query: str, params: dict = None) -> QueryResult:
@@ -717,7 +725,7 @@ class FalkorDBAdapter:
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 10,
+        limit: int | None = 10,
         with_vector: bool = False,
     ) -> list:
         """
@@ -746,6 +754,14 @@ class FalkorDBAdapter:
 
         if query_text and not query_vector:
             query_vector = (await self.embed_data([query_text]))[0]
+
+        if limit is None:
+            query = "MATCH (n) RETURN COUNT(n)"
+            result = self.query(query)
+            limit = result.result_set[0][0]
+
+        if limit == 0:
+            return []
 
         # For FalkorDB, let's do a simple property-based search instead of vector search for now
         # since the vector index might not be set up correctly
@@ -806,9 +822,6 @@ class FalkorDBAdapter:
 
             Returns a list of results for each search query executed in parallel.
         """
-
-        if limit is None:
-            limit = 10
 
         query_vectors = await self.embedding_engine.embed_text(query_texts)
 

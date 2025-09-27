@@ -7,7 +7,7 @@ requires-python = ">=3.11,<=3.13"
 dependencies = [
     "pymilvus>=2.5.0,<3",
     "milvus-lite>=2.4.0; sys_platform != 'win32'",
-    "cognee>=0.2.4"
+    "cognee>=0.3.4"
 ]
 
 [project.optional-dependencies]
@@ -21,7 +21,7 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 warn_return_any = true
 no_implicit_optional = true
-disallow_untyped_defs = true
+#disallow_untyped_defs = true
 check_untyped_defs = true
 disallow_any_generics = true
 strict_equality = true

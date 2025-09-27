@@ -282,7 +282,7 @@ class OpenSearchAdapter(VectorDBInterface):
         collection_name: str,
         query_text: str | None = None,
         query_vector: list[float] | None = None,
-        limit: int = 15,
+        limit: int | None = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
         """
@@ -342,7 +342,7 @@ class OpenSearchAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int = 15,
+        limit: int | None = 15,
         with_vectors: bool = False,
     ):
         """
@@ -394,3 +394,15 @@ class OpenSearchAdapter(VectorDBInterface):
         indices = await self.client.indices.get(index=f"{self.index_prefix}*")
         for index in indices:
             await self.client.indices.delete(index=index)
+
+    async def get_collection_names(self):
+        """
+        Get names of all collections in the database.
+
+        Returns:
+            List of collection names.
+        """
+
+        indices = await self.client.indices.get(index=f"{self.index_prefix}*")
+
+        return indices.keys()

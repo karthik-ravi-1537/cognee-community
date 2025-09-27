@@ -43,7 +43,7 @@ jobs:
           python-version: '3.12.x'
           package-path: packages/hybrid/duckdb
 
-      - name: Run DuckDB Tests
+      - name: Run DuckDB Example
         env:
           ENV: 'dev'
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
@@ -57,3 +57,18 @@ jobs:
           VECTOR_DB_PROVIDER: 'duckdb'
         working-directory: ./packages/hybrid/duckdb
         run: poetry run python examples/example.py
+
+      - name: Run DuckDB Tests
+        env:
+          ENV: 'dev'
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          LLM_ENDPOINT: ${{ secrets.LLM_ENDPOINT }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_API_VERSION: ${{ secrets.LLM_API_VERSION }}
+          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
+          EMBEDDING_ENDPOINT: ${{ secrets.EMBEDDING_ENDPOINT }}
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          EMBEDDING_API_VERSION: ${{ secrets.EMBEDDING_API_VERSION }}
+          VECTOR_DB_PROVIDER: 'duckdb'
+        working-directory: ./packages/hybrid/duckdb
+        run: poetry run python tests/test_duckdb.py

@@ -77,7 +77,7 @@ jobs:
           # Final verification
           curl -f http://localhost:9091/healthz || (echo "Milvus failed to start properly" && exit 1)
 
-      - name: Run Milvus Tests
+      - name: Run Milvus Example
         env:
           ENV: 'dev'
           LLM_MODEL: ${{ secrets.LLM_MODEL }}
@@ -92,3 +92,19 @@ jobs:
           VECTOR_DB_URL: 'http://localhost:19530'
         working-directory: ./packages/vector/milvus
         run: poetry run python examples/example.py
+
+      - name: Run Milvus Tests
+        env:
+          ENV: 'dev'
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+          LLM_ENDPOINT: ${{ secrets.LLM_ENDPOINT }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_API_VERSION: ${{ secrets.LLM_API_VERSION }}
+          EMBEDDING_MODEL: ${{ secrets.EMBEDDING_MODEL }}
+          EMBEDDING_ENDPOINT: ${{ secrets.EMBEDDING_ENDPOINT }}
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+          EMBEDDING_API_VERSION: ${{ secrets.EMBEDDING_API_VERSION }}
+          VECTOR_DB_PROVIDER: 'milvus'
+          VECTOR_DB_URL: 'http://localhost:19530'
+        working-directory: ./packages/vector/milvus
+        run: poetry run python tests/test_milvus.py
