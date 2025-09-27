@@ -1,5 +1,4 @@
 import asyncio
-from typing import List, Optional
 
 from cognee.infrastructure.databases.exceptions import MissingQueryParameterError
 from cognee.infrastructure.databases.vector import VectorDBInterface
@@ -12,7 +11,6 @@ from cognee.infrastructure.engine import DataPoint
 from cognee.infrastructure.engine.utils import parse_id
 from cognee.shared.logging_utils import get_logger
 from pinecone import Pinecone, ServerlessSpec
-from pinecone.exceptions import NotFoundException, PineconeException
 
 logger = get_logger("PineconeAdapter")
 
@@ -30,7 +28,8 @@ class PineconeAdapter(VectorDBInterface):
     cloud: str = None
     region: str = None
 
-    def __init__(self, api_key: str, embedding_engine: EmbeddingEngine, environment: str = None, cloud: str = None, region: str = None):
+    def __init__(self, url, api_key, embedding_engine: EmbeddingEngine, environment: str = None, cloud: str = None, region: str = None):
+        self.url = url  # Not used by Pinecone, but required by Cognee interface
         self.api_key = api_key
         self.environment = environment
         self.cloud = cloud if cloud is not None else "aws"
@@ -92,10 +91,24 @@ class PineconeAdapter(VectorDBInterface):
             )
 
             def convert_to_pinecone_vector(data_point: DataPoint):
+                # Clean metadata to only include Pinecone-compatible types
+                clean_metadata = {}
+                data_dump = data_point.model_dump()
+
+                for key, value in data_dump.items():
+                    if key != "metadata":  # Skip the nested metadata field that causes issues
+                        if isinstance(value, (str, int, float, bool)):
+                            clean_metadata[key] = value
+                        elif isinstance(value, list) and all(isinstance(item, str) for item in value):
+                            clean_metadata[key] = value
+                        else:
+                            # Convert complex types to strings
+                            clean_metadata[key] = str(value)
+
                 return {
                     "id": str(data_point.id),
                     "values": data_vectors[data_points.index(data_point)],
-                    "metadata": data_point.model_dump()
+                    "metadata": clean_metadata
                 }
 
             vectors = [convert_to_pinecone_vector(point) for point in data_points]
