@@ -3,8 +3,15 @@ import os
 import pathlib
 from os import path
 
-# Please provide an OpenAI API Key
-os.environ.setdefault("LLM_API_KEY", "your-api-key")
+# Check for OpenAI API Key - don't use placeholder
+openai_api_key = os.getenv("OPENAI_API_KEY") or os.getenv("LLM_API_KEY")
+if not openai_api_key or openai_api_key == "your-api-key":
+    raise ValueError(
+        "OpenAI API key is required! Please set OPENAI_API_KEY environment variable. "
+        "You can get your API key from https://platform.openai.com/account/api-keys"
+    )
+
+os.environ["LLM_API_KEY"] = openai_api_key
 
 
 async def main():
@@ -22,10 +29,11 @@ async def main():
     config.set_vector_db_config(
         {
             "vector_db_provider": "pinecone",
-            "vector_db_api_key": os.getenv("PINECONE_API_KEY", "your-pinecone-api-key"),
-            "vector_db_environment": os.getenv("PINECONE_ENVIRONMENT", None),  # Optional
-            "vector_db_cloud": os.getenv("PINECONE_CLOUD", "aws"),  # Optional, defaults to aws
-            "vector_db_region": os.getenv("PINECONE_REGION", "us-east-1"),  # Optional, defaults to us-east-1
+            "vector_db_url": os.getenv("PINECONE_API_URL", "https://api.pinecone.io"),  # Allow override via env var
+            "vector_db_key": os.getenv("PINECONE_API_KEY", "your-pinecone-api-key"),
+            # "environment": os.getenv("PINECONE_ENVIRONMENT", None),  # Optional
+            # "cloud": os.getenv("PINECONE_CLOUD", "aws"),  # Optional, defaults to aws
+            # "region": os.getenv("PINECONE_REGION", "us-east-1"),  # Optional, defaults to us-east-1
         }
     )
 

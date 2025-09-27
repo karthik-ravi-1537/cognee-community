@@ -15,6 +15,34 @@ from pinecone import Pinecone, ServerlessSpec
 logger = get_logger("PineconeAdapter")
 
 
+def sanitize_pinecone_name(name: str) -> str:
+    """
+    Sanitize a name to comply with Pinecone's naming requirements:
+    - Only lowercase alphanumeric characters and hyphens
+    - Must start with a letter
+    - Must not end with a hyphen
+    """
+    # Convert to lowercase
+    name = name.lower()
+
+    # Replace invalid characters with hyphens
+    import re
+
+    name = re.sub(r"[^a-z0-9\-]", "-", name)
+
+    # Ensure it starts with a letter
+    if not name[0].isalpha():
+        name = "index-" + name
+
+    # Remove consecutive hyphens
+    name = re.sub(r"-+", "-", name)
+
+    # Ensure it doesn't end with a hyphen
+    name = name.rstrip("-")
+
+    return name
+
+
 class IndexSchema(DataPoint):
     text: str
 
@@ -121,13 +149,15 @@ class PineconeAdapter(VectorDBInterface):
             raise error
 
     async def create_vector_index(self, index_name: str, index_property_name: str):
-        await self.create_collection(f"{index_name}_{index_property_name}")
+        sanitized_name = sanitize_pinecone_name(f"{index_name}_{index_property_name}")
+        await self.create_collection(sanitized_name)
 
     async def index_data_points(
         self, index_name: str, index_property_name: str, data_points: list[DataPoint]
     ):
+        sanitized_name = sanitize_pinecone_name(f"{index_name}_{index_property_name}")
         await self.create_data_points(
-            f"{index_name}_{index_property_name}",
+            sanitized_name,
             [
                 IndexSchema(
                     id=data_point.id,
@@ -159,10 +189,28 @@ class PineconeAdapter(VectorDBInterface):
         limit: int = 15,
         with_vector: bool = False,
     ) -> list[ScoredResult]:
+        """Search for similar vectors in the collection.
+
+        Args:
+            collection_name: Name of the collection to search.
+            query_text: Text query to search for (will be embedded).
+            query_vector: Pre-computed query vector.
+            limit: Maximum number of results to return.
+            with_vector: Whether to include vectors in results.
+
+        Returns:
+            List of ScoredResult objects sorted by similarity.
+
+        Raises:
+            MissingQueryParameterError: If neither query_text nor query_vector is provided.
+        """
         if query_text is None and query_vector is None:
             raise MissingQueryParameterError()
 
         if not await self.has_collection(collection_name):
+            logger.warning(
+                f"Collection '{collection_name}' not found in PineconeAdapter.search; returning []."
+            )
             return []
 
         if query_vector is None:
@@ -172,9 +220,12 @@ class PineconeAdapter(VectorDBInterface):
             index = self.get_pinecone_index(collection_name)
 
             if limit == 0:
-                # Pinecone doesn't have a direct count method, so we'll use a reasonable default
-                # but we still need to handle the case where we want all results
-                limit = 10000
+                # Get actual index stats instead of hardcoded limit
+                stats = index.describe_index_stats()
+                limit = stats.total_vector_count
+
+            if limit == 0:
+                return []
 
             results = index.query(
                 vector=query_vector,
@@ -203,37 +254,69 @@ class PineconeAdapter(VectorDBInterface):
         self,
         collection_name: str,
         query_texts: list[str],
-        limit: int = None,
+        limit: int | None = None,
         with_vectors: bool = False,
-    ):
-        """
-        Perform batch search in a Pinecone index.
-        Note: Pinecone doesn't have native batch search, so we'll perform individual searches.
+    ) -> list[list[ScoredResult]]:
+        """Perform batch search for multiple queries.
+
+        Args:
+            collection_name: Name of the collection to search.
+            query_texts: List of query texts to search for.
+            limit: Maximum number of results per query.
+            with_vectors: Whether to include vectors in results.
+
+        Returns:
+            List of search results, one list per query.
+
+        Raises:
+            Exception: If search execution fails.
         """
         if limit is None:
             limit = 15
 
-        vectors = await self.embed_data(query_texts)
+        if not await self.has_collection(collection_name):
+            logger.warning(
+                f"Collection '{collection_name}' not found in PineconeAdapter.batch_search; returning empty results."
+            )
+            return [[] for _ in query_texts]
 
-        index = self.get_pinecone_index(collection_name)
+        try:
+            vectors = await self.embed_data(query_texts)
+            index = self.get_pinecone_index(collection_name)
 
-        results = []
-        for vector in vectors:
-            try:
-                result = index.query(
-                    vector=vector,
-                    top_k=limit,
-                    include_metadata=True,
-                    include_values=with_vectors
-                )
-                # Filter results with high similarity (>0.9)
-                filtered_matches = [match for match in result.matches if match.score > 0.9]
-                results.append(filtered_matches)
-            except Exception as e:
-                logger.error("Error in batch search: %s", str(e))
-                results.append([])
+            results = []
+            for i, vector in enumerate(vectors):
+                try:
+                    result = index.query(
+                        vector=vector,
+                        top_k=limit,
+                        include_metadata=True,
+                        include_values=with_vectors
+                    )
 
-        return results
+                    # Convert to ScoredResult objects (no filtering to match other adapters)
+                    scored_results = [
+                        ScoredResult(
+                            id=parse_id(match.id),
+                            payload={
+                                **match.metadata,
+                                "id": parse_id(match.id),
+                            },
+                            score=match.score,
+                        )
+                        for match in result.matches
+                    ]
+                    results.append(scored_results)
+
+                except Exception as e:
+                    logger.error(f"Error in batch search for query {i}: {str(e)}")
+                    results.append([])
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Error during batch search: {str(e)}")
+            raise e
 
     async def delete_data_points(self, collection_name: str, data_point_ids: list[str]):
         try:
